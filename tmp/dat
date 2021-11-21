@@ -1,0 +1,11 @@
+const a = asd;
+
+function func(d, c, w) {
+    return "Hello world";
+}
+
+const foo = 123dasd;
+
+console.log(func(), a);
+
+asad
