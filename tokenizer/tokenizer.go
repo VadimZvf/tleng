@@ -39,7 +39,9 @@ func (tknzr *Tokenizer) addToken(token token.Token) {
 }
 
 func (tknzr *Tokenizer) GetTokens() []token.Token {
-	for !tknzr.buffer.GetIsEnd() {
+	for {
+		tknzr.buffer.TrimNext()
+
 		keyWordToken, isFoundKeyWordToken := getKeyWordToken(tknzr.buffer)
 
 		if isFoundKeyWordToken {
@@ -50,16 +52,6 @@ func (tknzr *Tokenizer) GetTokens() []token.Token {
 		symbolToken, isFoundSymbolToken := getSymbolToken(tknzr.buffer)
 
 		if isFoundSymbolToken {
-			// Unknown token, maybe its reference to variable
-			if len(tknzr.buffer.GetValue()) > 0 {
-				tknzr.addToken(token.Token{
-					Code:       token.KEY_WORD,
-					Value:      tknzr.buffer.GetValue(),
-					DebugValue: tknzr.buffer.GetValue(),
-					Position:   tknzr.buffer.GetPosition(),
-				})
-			}
-
 			tknzr.addToken(symbolToken)
 			tknzr.buffer.Clear()
 		}
@@ -68,11 +60,17 @@ func (tknzr *Tokenizer) GetTokens() []token.Token {
 			tknzr.buffer.AddSymbol()
 		}
 
-		tknzr.buffer.Next()
-		tknzr.buffer.TrimNext()
-	}
+		// Unknown token, maybe its reference to variable
+		if (tknzr.buffer.GetIsEnd() || isFoundSymbolToken) && len(tknzr.buffer.GetValue()) > 0 {
+			tknzr.addToken(getUnknownKeyWordToken(tknzr.buffer))
+		}
 
-	return tknzr.tokens
+		if tknzr.buffer.GetIsEnd() {
+			return tknzr.tokens
+		}
+
+		tknzr.buffer.Next()
+	}
 }
 
 func getSymbolToken(buffer iBuffer) (token.Token, bool) {
@@ -118,4 +116,13 @@ func getKeyWordToken(buffer iBuffer) (token.Token, bool) {
 	}
 
 	return token.Token{}, false
+}
+
+func getUnknownKeyWordToken(buffer iBuffer) token.Token {
+	return token.Token{
+		Code:       token.KEY_WORD,
+		Value:      buffer.GetValue(),
+		DebugValue: buffer.GetValue(),
+		Position:   buffer.GetPosition(),
+	}
 }
