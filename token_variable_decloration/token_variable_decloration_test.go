@@ -27,10 +27,10 @@ func GetSourceMock() *SourceMock {
 	return &SourceMock{false, "", -1}
 }
 
-func TestReturnShouldNotBeFound(t *testing.T) {
+func TestVariableShouldNotBeFound(t *testing.T) {
 	var src = GetSourceMock()
 	src.FullText = `
-		ret urn
+		cons t = "";
 	`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
@@ -38,10 +38,10 @@ func TestReturnShouldNotBeFound(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		token, isFound = ReturnProcessor(&buffer)
+		token, isFound = VariableDeclarationProcessor(&buffer)
 		buffer.TrimNext()
-		buffer.Next()
 		buffer.AddSymbol()
+		buffer.Next()
 	}
 
 	if isFound {
@@ -53,18 +53,18 @@ func TestReturnShouldNotBeFound(t *testing.T) {
 	}
 }
 
-func TestEmptyReturn(t *testing.T) {
+func TestEmptyVariableDecloration(t *testing.T) {
 	var src = GetSourceMock()
 	src.FullText = `
-        return
+		const a;
 	`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var token = token.Token{}
+	var foundToken = token.Token{}
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		token, isFound = ReturnProcessor(&buffer)
+		foundToken, isFound = VariableDeclarationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()
@@ -74,12 +74,54 @@ func TestEmptyReturn(t *testing.T) {
 		t.Errorf("Should find token")
 	}
 
-	if token.Code != "RETURN_DECLARATION" {
+	if foundToken.Code == "" {
 		t.Errorf("Should find token")
 	}
 
-	if token.Position != 15 {
-		t.Errorf("Should save position")
+	var argument3Param = token.TokenParam{
+		Name:     "NAME",
+		Value:    "a",
+		Position: 10,
+	}
+
+	if !containParam(foundToken.Params, argument3Param) {
+		t.Errorf("Should save name")
+	}
+}
+
+func TestLongNameVariableDecloration(t *testing.T) {
+	var src = GetSourceMock()
+	src.FullText = `
+		const wow_foo_bar;
+	`
+
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var foundToken = token.Token{}
+	var isFound = false
+
+	for !buffer.GetIsEnd() && !isFound {
+		foundToken, isFound = VariableDeclarationProcessor(&buffer)
+		buffer.TrimNext()
+		buffer.AddSymbol()
+		buffer.Next()
+	}
+
+	if !isFound {
+		t.Errorf("Should find token")
+	}
+
+	if foundToken.Code == "" {
+		t.Errorf("Should find token")
+	}
+
+	var argument3Param = token.TokenParam{
+		Name:     "NAME",
+		Value:    "wow_foo_bar",
+		Position: 20,
+	}
+
+	if !containParam(foundToken.Params, argument3Param) {
+		t.Errorf("Should save name")
 	}
 }
 

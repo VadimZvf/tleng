@@ -10,12 +10,14 @@ var VariableDeclarationProcessor token.TokenProcessor = proccess
 var VARIABLE_NAME_PARAM = "NAME"
 
 func proccess(buffer token.IBuffer) (token.Token, bool) {
-	if buffer.GetValue() != "const" {
+	if buffer.GetFullValue() != "const" {
 		return token.Token{}, false
 	}
 
 	var position = buffer.GetPosition()
 
+	// Go to next symbol
+	buffer.Next()
 	buffer.TrimNext()
 	buffer.Clear()
 

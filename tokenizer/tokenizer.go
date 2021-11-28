@@ -1,8 +1,6 @@
 package tokenizer
 
 import (
-	"fmt"
-
 	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_return"
@@ -12,6 +10,7 @@ import (
 
 type iBuffer interface {
 	GetValue() (value string)
+	GetFullValue() (value string)
 	GetSymbol() (symbol string)
 	GetPosition() int
 	GetIsEnd() bool
@@ -41,8 +40,6 @@ func (tknzr *Tokenizer) addToken(token token.Token) {
 
 func (tknzr *Tokenizer) GetTokens() []token.Token {
 	for !tknzr.buffer.GetIsEnd() {
-		tknzr.buffer.TrimNext()
-
 		keyWordToken, isFoundKeyWordToken := getKeyWordToken(tknzr.buffer)
 
 		if isFoundKeyWordToken {
@@ -50,21 +47,16 @@ func (tknzr *Tokenizer) GetTokens() []token.Token {
 			tknzr.buffer.Clear()
 		}
 
-		stringToken, isFountStringToken := token_string.StringProcessor(tknzr.buffer)
-
-		if isFountStringToken {
-			tknzr.addToken(stringToken)
-			tknzr.buffer.Clear()
-		}
-
 		symbolToken, isFoundSymbolToken := getSymbolToken(tknzr.buffer)
 
 		if isFoundSymbolToken {
-			if len(tknzr.buffer.GetValue()) > 1 {
+			// Unknown token, maybe its reference to variable
+			if len(tknzr.buffer.GetValue()) > 0 {
 				tknzr.addToken(token.Token{
 					Code:       token.KEY_WORD,
 					Value:      tknzr.buffer.GetValue(),
 					DebugValue: tknzr.buffer.GetValue(),
+					Position:   tknzr.buffer.GetPosition(),
 				})
 			}
 
@@ -72,13 +64,12 @@ func (tknzr *Tokenizer) GetTokens() []token.Token {
 			tknzr.buffer.Clear()
 		}
 
-		if !isFoundKeyWordToken && !isFoundSymbolToken && !isFountStringToken {
+		if !isFoundKeyWordToken && !isFoundSymbolToken {
 			tknzr.buffer.AddSymbol()
 		}
 
 		tknzr.buffer.Next()
-		fmt.Println("symbol - ", tknzr.buffer.GetSymbol())
-		fmt.Println("is end - ", tknzr.buffer.GetIsEnd())
+		tknzr.buffer.TrimNext()
 	}
 
 	return tknzr.tokens
@@ -110,14 +101,11 @@ func getSymbolToken(buffer iBuffer) (token.Token, bool) {
 }
 
 func getKeyWordToken(buffer iBuffer) (token.Token, bool) {
-	if len(buffer.GetValue()) == 0 {
-		return token.Token{}, false
-	}
-
 	var tokensArray = []token.TokenProcessor{
 		token_return.ReturnProcessor,
 		token_variable_decloration.VariableDeclarationProcessor,
 		token_function_declaration.FunctionDeclorationProcessor,
+		token_string.StringProcessor,
 	}
 
 	for i := 0; i < len(tokensArray); i++ {

@@ -20,3 +20,10 @@ cd token_function_declaration
 go test
 cd ..
 echo ""
+
+echo "Variable declaration token"
+echo "======================"
+cd token_variable_decloration
+go test
+cd ..
+echo ""

@@ -8,7 +8,7 @@ var RETURN_DECLARATION = "RETURN_DECLARATION"
 var ReturnProcessor token.TokenProcessor = proccess
 
 func proccess(buffer token.IBuffer) (token.Token, bool) {
-	if buffer.GetValue() != "return" {
+	if buffer.GetFullValue() != "return" {
 		return token.Token{}, false
 	}
 

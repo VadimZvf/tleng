@@ -40,8 +40,8 @@ func TestReturnShouldNotBeFound(t *testing.T) {
 	for !buffer.GetIsEnd() && !isFound {
 		token, isFound = ReturnProcessor(&buffer)
 		buffer.TrimNext()
-		buffer.Next()
 		buffer.AddSymbol()
+		buffer.Next()
 	}
 
 	if isFound {

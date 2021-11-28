@@ -18,6 +18,7 @@ type Token struct {
 
 type IBuffer interface {
 	GetValue() (value string)
+	GetFullValue() (value string)
 	GetSymbol() (symbol string)
 	GetPosition() int
 	GetIsEnd() bool
@@ -94,7 +95,7 @@ var KEY_WORD = "KEY_WORD"
 // =======================================
 func IsLetter(s string) bool {
 	for _, r := range s {
-		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') {
+		if ((r < 'a' || r > 'z') && (r < 'A' || r > 'Z')) && r != '_' {
 			return false
 		}
 	}

@@ -28,11 +28,14 @@ func readWordsWithSeporator(buffer token.IBuffer, seporator string) []token.Toke
 }
 
 func proccess(buffer token.IBuffer) (token.Token, bool) {
-	if buffer.GetValue() != "function" {
+	if buffer.GetFullValue() != "function" {
 		return token.Token{}, false
 	}
 
 	var position = buffer.GetPosition()
+
+	// Go to next symbol
+	buffer.Next()
 
 	buffer.Clear()
 	buffer.TrimNext()

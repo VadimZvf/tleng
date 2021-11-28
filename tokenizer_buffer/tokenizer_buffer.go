@@ -16,6 +16,10 @@ func (buffer *Buffer) GetValue() string {
 	return buffer.value
 }
 
+func (buffer *Buffer) GetFullValue() string {
+	return buffer.value + buffer.symbol
+}
+
 func (buffer *Buffer) GetSymbol() string {
 	return buffer.symbol
 }

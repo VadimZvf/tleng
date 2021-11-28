@@ -1,8 +1,6 @@
 package token_string
 
 import (
-	"fmt"
-
 	"github.com/VadimZvf/golang/token"
 )
 
@@ -13,9 +11,6 @@ func proccess(buffer token.IBuffer) (token.Token, bool) {
 	if buffer.GetSymbol() != "\"" {
 		return token.Token{}, false
 	}
-
-	fmt.Println("value ", buffer.GetValue())
-	fmt.Println("symbol ", buffer.GetSymbol())
 
 	// Remove quote mark at start
 	buffer.Next()

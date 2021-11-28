@@ -44,8 +44,8 @@ func TestFunctionNotFound(t *testing.T) {
 	for !buffer.GetIsEnd() && !isFound {
 		token, isFound = FunctionDeclorationProcessor(&buffer)
 		buffer.TrimNext()
-		buffer.Next()
 		buffer.AddSymbol()
+		buffer.Next()
 	}
 
 	if isFound != false {
@@ -82,7 +82,7 @@ func TestFunctionWithoutArguments(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 16 {
+	if foundToken.Position != 15 {
 		t.Errorf("Should save token position")
 	}
 
@@ -122,7 +122,7 @@ func TestIgnoreSpaces(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 16 {
+	if foundToken.Position != 15 {
 		t.Errorf("Should save token position")
 	}
 
@@ -162,7 +162,7 @@ func TestParseSingleArgument(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 16 {
+	if foundToken.Position != 15 {
 		t.Errorf("Should save token position")
 	}
 
