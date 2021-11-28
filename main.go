@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/VadimZvf/golang/source"
+	"github.com/VadimZvf/golang/source_file"
 	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_variable_decloration"
@@ -34,7 +34,7 @@ func main() {
 	file, err := os.Open(filePath)
 	check(err)
 
-	var src = source.GetSource(file)
+	var src = source_file.GetSource(file)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tknzr = tokenizer.GetTokenizer(&buffer)
 

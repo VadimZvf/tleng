@@ -3,23 +3,12 @@ package tokenizer_buffer
 import (
 	"reflect"
 	"testing"
+
+	"github.com/VadimZvf/golang/source_mock"
 )
 
-type SourceMock struct {
-	isEnd      bool
-	nextSymbol string
-}
-
-func (source *SourceMock) NextSymbol() (symbol string, isEnd bool) {
-	return source.nextSymbol, source.isEnd
-}
-
-func GetSourceMock() *SourceMock {
-	return &SourceMock{false, "a"}
-}
-
 func TestCreateBuffer(t *testing.T) {
-	var source = GetSourceMock()
+	var source = source_mock.GetSimpleSource()
 	buffer := CreateBuffer(source)
 	if buffer.isEnd != false {
 		t.Errorf("Buffer interface should contain isEnd flag")
@@ -31,7 +20,7 @@ func TestCreateBuffer(t *testing.T) {
 }
 
 func TestGetValue(t *testing.T) {
-	var source = GetSourceMock()
+	var source = source_mock.GetSimpleSource()
 	buffer := CreateBuffer(source)
 	value := buffer.GetValue()
 	if value != "" {
@@ -45,10 +34,10 @@ func TestGetValue(t *testing.T) {
 		t.Errorf("Buffer should add symbol")
 	}
 
-	source.nextSymbol = "b"
+	source.NextSymbolValue = "b"
 	buffer.Next()
 	buffer.AddSymbol()
-	source.nextSymbol = "c"
+	source.NextSymbolValue = "c"
 	buffer.Next()
 	buffer.AddSymbol()
 	value = buffer.GetValue()
@@ -58,7 +47,7 @@ func TestGetValue(t *testing.T) {
 }
 
 func TestNext(t *testing.T) {
-	var source = GetSourceMock()
+	var source = source_mock.GetSimpleSource()
 	buffer := CreateBuffer(source)
 
 	buffer.Next()
@@ -72,8 +61,8 @@ func TestNext(t *testing.T) {
 		t.Errorf("Buffer should return isEnd")
 	}
 
-	source.isEnd = true
-	source.nextSymbol = "g"
+	source.IsEnd = true
+	source.NextSymbolValue = "g"
 
 	buffer.Next()
 	symbol = buffer.GetSymbol()
@@ -89,7 +78,7 @@ func TestNext(t *testing.T) {
 }
 
 func TestGetPosition(t *testing.T) {
-	var source = GetSourceMock()
+	var source = source_mock.GetSimpleSource()
 	buffer := CreateBuffer(source)
 	positin := buffer.GetPosition()
 	if positin != 0 {
@@ -162,7 +151,7 @@ func TestTrimNextWothoutSpace(t *testing.T) {
 }
 
 func TestClear(t *testing.T) {
-	var source = GetSourceMock()
+	var source = source_mock.GetSimpleSource()
 	buffer := CreateBuffer(source)
 	buffer.Next()
 	buffer.Next()

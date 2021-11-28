@@ -3,32 +3,13 @@ package token_return
 import (
 	"testing"
 
+	"github.com/VadimZvf/golang/source_mock"
 	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/tokenizer_buffer"
 )
 
-type SourceMock struct {
-	IsEnd    bool
-	FullText string
-	position int
-}
-
-func (source *SourceMock) NextSymbol() (symbol string, isEnd bool) {
-	source.position += 1
-
-	if source.position >= len(source.FullText) {
-		return "", true
-	}
-
-	return string(source.FullText[source.position]), false
-}
-
-func GetSourceMock() *SourceMock {
-	return &SourceMock{false, "", -1}
-}
-
 func TestReturnShouldNotBeFound(t *testing.T) {
-	var src = GetSourceMock()
+	var src = source_mock.GetSourceMock()
 	src.FullText = `
 		ret urn
 	`
@@ -54,7 +35,7 @@ func TestReturnShouldNotBeFound(t *testing.T) {
 }
 
 func TestEmptyReturn(t *testing.T) {
-	var src = GetSourceMock()
+	var src = source_mock.GetSourceMock()
 	src.FullText = `
         return
 	`

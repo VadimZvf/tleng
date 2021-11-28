@@ -3,32 +3,13 @@ package token_function_declaration
 import (
 	"testing"
 
+	"github.com/VadimZvf/golang/source_mock"
 	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/tokenizer_buffer"
 )
 
-type SourceMock struct {
-	IsEnd    bool
-	FullText string
-	position int
-}
-
-func (source *SourceMock) NextSymbol() (symbol string, isEnd bool) {
-	source.position += 1
-
-	if source.position >= len(source.FullText) {
-		return "", true
-	}
-
-	return string(source.FullText[source.position]), false
-}
-
-func GetSourceMock() *SourceMock {
-	return &SourceMock{false, "", 0}
-}
-
 func TestFunctionNotFound(t *testing.T) {
-	var src = GetSourceMock()
+	var src = source_mock.GetSourceMock()
 	src.FullText = `
 		func wow() {
 
@@ -58,7 +39,7 @@ func TestFunctionNotFound(t *testing.T) {
 }
 
 func TestFunctionWithoutArguments(t *testing.T) {
-	var src = GetSourceMock()
+	var src = source_mock.GetSourceMock()
 	src.FullText = `
         function wow() {}
 	`
@@ -82,14 +63,14 @@ func TestFunctionWithoutArguments(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 15 {
+	if foundToken.Position != 16 {
 		t.Errorf("Should save token position")
 	}
 
 	var nameParam = token.TokenParam{
 		Name:     "NAME",
 		Value:    "wow",
-		Position: 20,
+		Position: 21,
 	}
 
 	if !containParam(foundToken.Params, nameParam) {
@@ -98,7 +79,7 @@ func TestFunctionWithoutArguments(t *testing.T) {
 }
 
 func TestIgnoreSpaces(t *testing.T) {
-	var src = GetSourceMock()
+	var src = source_mock.GetSourceMock()
 	src.FullText = `
         function      foo    (     ) {}
 	`
@@ -122,14 +103,14 @@ func TestIgnoreSpaces(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 15 {
+	if foundToken.Position != 16 {
 		t.Errorf("Should save token position")
 	}
 
 	var nameParam = token.TokenParam{
 		Name:     "NAME",
 		Value:    "foo",
-		Position: 25,
+		Position: 26,
 	}
 
 	if !containParam(foundToken.Params, nameParam) {
@@ -138,7 +119,7 @@ func TestIgnoreSpaces(t *testing.T) {
 }
 
 func TestParseSingleArgument(t *testing.T) {
-	var src = GetSourceMock()
+	var src = source_mock.GetSourceMock()
 	src.FullText = `
         function      bar(baz) {}
 	`
@@ -162,14 +143,14 @@ func TestParseSingleArgument(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 15 {
+	if foundToken.Position != 16 {
 		t.Errorf("Should save token position")
 	}
 
 	var nameParam = token.TokenParam{
 		Name:     "NAME",
 		Value:    "bar",
-		Position: 25,
+		Position: 26,
 	}
 
 	if !containParam(foundToken.Params, nameParam) {
@@ -179,7 +160,7 @@ func TestParseSingleArgument(t *testing.T) {
 	var argumentParam = token.TokenParam{
 		Name:     "ARGUMENT",
 		Value:    "baz",
-		Position: 29,
+		Position: 30,
 	}
 
 	if !containParam(foundToken.Params, argumentParam) {
@@ -188,7 +169,7 @@ func TestParseSingleArgument(t *testing.T) {
 }
 
 func TestParseManyArgument(t *testing.T) {
-	var src = GetSourceMock()
+	var src = source_mock.GetSourceMock()
 	src.FullText = `
         function      bar( baz,  foo,     gaz) {}
 	`
@@ -207,7 +188,7 @@ func TestParseManyArgument(t *testing.T) {
 	var argumentParam = token.TokenParam{
 		Name:     "ARGUMENT",
 		Value:    "baz",
-		Position: 30,
+		Position: 31,
 	}
 
 	if !containParam(foundToken.Params, argumentParam) {
@@ -217,7 +198,7 @@ func TestParseManyArgument(t *testing.T) {
 	var argument2Param = token.TokenParam{
 		Name:     "ARGUMENT",
 		Value:    "foo",
-		Position: 36,
+		Position: 37,
 	}
 
 	if !containParam(foundToken.Params, argument2Param) {
@@ -227,7 +208,7 @@ func TestParseManyArgument(t *testing.T) {
 	var argument3Param = token.TokenParam{
 		Name:     "ARGUMENT",
 		Value:    "gaz",
-		Position: 45,
+		Position: 46,
 	}
 
 	if !containParam(foundToken.Params, argument3Param) {
