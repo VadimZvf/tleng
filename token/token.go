@@ -103,13 +103,15 @@ func IsLetter(s string) bool {
 }
 
 func ReadWord(buffer IBuffer) TokenParam {
+	var position = buffer.GetPosition()
 	for IsLetter(buffer.GetSymbol()) {
+		position = buffer.GetPosition()
 		buffer.AddSymbol()
 		buffer.Next()
 	}
 
 	return TokenParam{
 		Value:    buffer.GetValue(),
-		Position: buffer.GetPosition(),
+		Position: position,
 	}
 }

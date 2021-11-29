@@ -41,7 +41,7 @@ func (buffer *Buffer) Next() {
 }
 
 func (buffer *Buffer) TrimNext() {
-	for (buffer.GetSymbol() == " " || buffer.GetSymbol() == "\n" || buffer.GetSymbol() == "\t") && !buffer.GetIsEnd() {
+	for (buffer.GetSymbol() == " " || buffer.GetSymbol() == "\t") && !buffer.GetIsEnd() {
 		buffer.Next()
 	}
 }

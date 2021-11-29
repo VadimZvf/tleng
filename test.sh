@@ -27,3 +27,10 @@ cd token_variable_decloration
 go test
 cd ..
 echo ""
+
+echo "Tokenizer"
+echo "======================"
+cd tokenizer
+go test
+cd ..
+echo ""

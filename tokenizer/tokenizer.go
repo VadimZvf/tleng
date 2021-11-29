@@ -51,11 +51,6 @@ func (tknzr *Tokenizer) GetTokens() []token.Token {
 
 		symbolToken, isFoundSymbolToken := getSymbolToken(tknzr.buffer)
 
-		if isFoundSymbolToken {
-			tknzr.addToken(symbolToken)
-			tknzr.buffer.Clear()
-		}
-
 		if !isFoundKeyWordToken && !isFoundSymbolToken {
 			tknzr.buffer.AddSymbol()
 		}
@@ -63,6 +58,11 @@ func (tknzr *Tokenizer) GetTokens() []token.Token {
 		// Unknown token, maybe its reference to variable
 		if (tknzr.buffer.GetIsEnd() || isFoundSymbolToken) && len(tknzr.buffer.GetValue()) > 0 {
 			tknzr.addToken(getUnknownKeyWordToken(tknzr.buffer))
+		}
+
+		if isFoundSymbolToken {
+			tknzr.addToken(symbolToken)
+			tknzr.buffer.Clear()
 		}
 
 		if tknzr.buffer.GetIsEnd() {
@@ -123,6 +123,8 @@ func getUnknownKeyWordToken(buffer iBuffer) token.Token {
 		Code:       token.KEY_WORD,
 		Value:      buffer.GetValue(),
 		DebugValue: buffer.GetValue(),
-		Position:   buffer.GetPosition(),
+		// Substract 1 becouse keyword may be found only next token
+		// thats mean current position at space or END_LINK token
+		Position: buffer.GetPosition() - 1,
 	}
 }

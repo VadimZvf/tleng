@@ -116,7 +116,7 @@ func (source *SourceMockWithContent) NextSymbol() (symbol string, isEnd bool) {
 
 func TestTrimNext(t *testing.T) {
 	var source = SourceMockWithContent{
-		fullText: "      \n     wow    ",
+		fullText: "            wow    ",
 		position: -1,
 	}
 	buffer := CreateBuffer(&source)

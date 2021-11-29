@@ -10,13 +10,9 @@ import (
 
 func TestFunctionNotFound(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		func wow() {
-
-		}
-
-		wowdsa()
-	`
+	src.FullText = `func wow() {}
+						wowdsa()
+					`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var token = token.Token{}
@@ -40,9 +36,7 @@ func TestFunctionNotFound(t *testing.T) {
 
 func TestFunctionWithoutArguments(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-        function wow() {}
-	`
+	src.FullText = `function wow() {}`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var foundToken = token.Token{}
@@ -63,14 +57,14 @@ func TestFunctionWithoutArguments(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 16 {
+	if foundToken.Position != 7 {
 		t.Errorf("Should save token position")
 	}
 
 	var nameParam = token.TokenParam{
 		Name:     "NAME",
 		Value:    "wow",
-		Position: 21,
+		Position: 11,
 	}
 
 	if !containParam(foundToken.Params, nameParam) {
@@ -80,9 +74,7 @@ func TestFunctionWithoutArguments(t *testing.T) {
 
 func TestIgnoreSpaces(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-        function      foo    (     ) {}
-	`
+	src.FullText = `function      foo    (     ) {}`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var foundToken = token.Token{}
@@ -103,14 +95,14 @@ func TestIgnoreSpaces(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 16 {
+	if foundToken.Position != 7 {
 		t.Errorf("Should save token position")
 	}
 
 	var nameParam = token.TokenParam{
 		Name:     "NAME",
 		Value:    "foo",
-		Position: 26,
+		Position: 16,
 	}
 
 	if !containParam(foundToken.Params, nameParam) {
@@ -120,9 +112,7 @@ func TestIgnoreSpaces(t *testing.T) {
 
 func TestParseSingleArgument(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-        function      bar(baz) {}
-	`
+	src.FullText = `function      bar(baz) {}`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var foundToken = token.Token{}
@@ -143,14 +133,14 @@ func TestParseSingleArgument(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 16 {
+	if foundToken.Position != 7 {
 		t.Errorf("Should save token position")
 	}
 
 	var nameParam = token.TokenParam{
 		Name:     "NAME",
 		Value:    "bar",
-		Position: 26,
+		Position: 16,
 	}
 
 	if !containParam(foundToken.Params, nameParam) {
@@ -160,7 +150,7 @@ func TestParseSingleArgument(t *testing.T) {
 	var argumentParam = token.TokenParam{
 		Name:     "ARGUMENT",
 		Value:    "baz",
-		Position: 30,
+		Position: 20,
 	}
 
 	if !containParam(foundToken.Params, argumentParam) {
@@ -170,9 +160,7 @@ func TestParseSingleArgument(t *testing.T) {
 
 func TestParseManyArgument(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-        function      bar( baz,  foo,     gaz) {}
-	`
+	src.FullText = `function      bar( baz,  foo,     gaz) {}`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var foundToken = token.Token{}
@@ -188,7 +176,7 @@ func TestParseManyArgument(t *testing.T) {
 	var argumentParam = token.TokenParam{
 		Name:     "ARGUMENT",
 		Value:    "baz",
-		Position: 31,
+		Position: 21,
 	}
 
 	if !containParam(foundToken.Params, argumentParam) {
@@ -198,7 +186,7 @@ func TestParseManyArgument(t *testing.T) {
 	var argument2Param = token.TokenParam{
 		Name:     "ARGUMENT",
 		Value:    "foo",
-		Position: 37,
+		Position: 27,
 	}
 
 	if !containParam(foundToken.Params, argument2Param) {
@@ -208,7 +196,7 @@ func TestParseManyArgument(t *testing.T) {
 	var argument3Param = token.TokenParam{
 		Name:     "ARGUMENT",
 		Value:    "gaz",
-		Position: 46,
+		Position: 36,
 	}
 
 	if !containParam(foundToken.Params, argument3Param) {

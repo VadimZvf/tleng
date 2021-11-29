@@ -10,9 +10,7 @@ import (
 
 func TestVariableShouldNotBeFound(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		cons t = "";
-	`
+	src.FullText = `cons t = "";`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var token = token.Token{}
@@ -36,9 +34,7 @@ func TestVariableShouldNotBeFound(t *testing.T) {
 
 func TestEmptyVariableDecloration(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		const a;
-	`
+	src.FullText = `const a;`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var foundToken = token.Token{}
@@ -62,7 +58,7 @@ func TestEmptyVariableDecloration(t *testing.T) {
 	var argument3Param = token.TokenParam{
 		Name:     "NAME",
 		Value:    "a",
-		Position: 10,
+		Position: 6,
 	}
 
 	if !containParam(foundToken.Params, argument3Param) {
@@ -72,9 +68,7 @@ func TestEmptyVariableDecloration(t *testing.T) {
 
 func TestLongNameVariableDecloration(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		const wow_foo_bar;
-	`
+	src.FullText = `const wow_foo_bar;`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var foundToken = token.Token{}
@@ -98,7 +92,7 @@ func TestLongNameVariableDecloration(t *testing.T) {
 	var argument3Param = token.TokenParam{
 		Name:     "NAME",
 		Value:    "wow_foo_bar",
-		Position: 20,
+		Position: 16,
 	}
 
 	if !containParam(foundToken.Params, argument3Param) {
