@@ -17,7 +17,7 @@ func TestVariableShouldNotBeFound(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		token, isFound = VariableDeclarationProcessor(&buffer)
+		token, isFound, _ = VariableDeclarationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()
@@ -41,7 +41,7 @@ func TestEmptyVariableDecloration(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound = VariableDeclarationProcessor(&buffer)
+		foundToken, isFound, _ = VariableDeclarationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()
@@ -75,7 +75,7 @@ func TestLongNameVariableDecloration(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound = VariableDeclarationProcessor(&buffer)
+		foundToken, isFound, _ = VariableDeclarationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()

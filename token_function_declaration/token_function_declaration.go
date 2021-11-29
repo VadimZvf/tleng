@@ -27,9 +27,9 @@ func readWordsWithSeporator(buffer token.IBuffer, seporator string) []token.Toke
 	return words
 }
 
-func proccess(buffer token.IBuffer) (token.Token, bool) {
+func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 	if buffer.GetFullValue() != "function" {
-		return token.Token{}, false
+		return token.Token{}, false, nil
 	}
 
 	var position = buffer.GetPosition()
@@ -65,5 +65,5 @@ func proccess(buffer token.IBuffer) (token.Token, bool) {
 		Code:     FUNCTION_DECLARATION,
 		Position: position,
 		Params:   append(arguments, functionName),
-	}, true
+	}, true, nil
 }

@@ -19,7 +19,7 @@ func TestReturnShouldNotBeFound(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		token, isFound = ReturnProcessor(&buffer)
+		token, isFound, _ = ReturnProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()
@@ -45,7 +45,7 @@ func TestEmptyReturn(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		token, isFound = ReturnProcessor(&buffer)
+		token, isFound, _ = ReturnProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()

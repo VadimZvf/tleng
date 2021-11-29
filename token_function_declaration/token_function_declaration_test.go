@@ -19,7 +19,7 @@ func TestFunctionNotFound(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		token, isFound = FunctionDeclorationProcessor(&buffer)
+		token, isFound, _ = FunctionDeclorationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()
@@ -43,7 +43,7 @@ func TestFunctionWithoutArguments(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound = FunctionDeclorationProcessor(&buffer)
+		foundToken, isFound, _ = FunctionDeclorationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()
@@ -81,7 +81,7 @@ func TestIgnoreSpaces(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound = FunctionDeclorationProcessor(&buffer)
+		foundToken, isFound, _ = FunctionDeclorationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()
@@ -119,7 +119,7 @@ func TestParseSingleArgument(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound = FunctionDeclorationProcessor(&buffer)
+		foundToken, isFound, _ = FunctionDeclorationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()
@@ -167,7 +167,7 @@ func TestParseManyArgument(t *testing.T) {
 	var isFound = false
 
 	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound = FunctionDeclorationProcessor(&buffer)
+		foundToken, isFound, _ = FunctionDeclorationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
 		buffer.Next()

@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/VadimZvf/golang/parser_error_printer"
 	"github.com/VadimZvf/golang/source_file"
+	"github.com/VadimZvf/golang/stdout"
 	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_variable_decloration"
@@ -20,12 +22,6 @@ func check(e error) {
 	}
 }
 
-type astNode struct {
-	nodeType string
-	params   []string
-	children []astNode
-}
-
 func main() {
 	filePath := os.Args[1]
 
@@ -38,7 +34,14 @@ func main() {
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tknzr = tokenizer.GetTokenizer(&buffer)
 
-	tokens := tknzr.GetTokens()
+	tokens, parsErr := tknzr.GetTokens()
+
+	if parsErr != nil {
+		var std = stdout.CreateStdout()
+		parser_error_printer.PrintError(&buffer, &std, parsErr)
+
+		os.Exit(1)
+	}
 
 	file.Close()
 
@@ -63,56 +66,4 @@ func main() {
 
 		color.New(color.FgCyan).Printf("\"\n")
 	}
-
-	// var ast = astNode{token.PROGRAMM.GetCode(), []string{}, []astNode{}}
-
-	// for i := 0; i < len(tokens); i++ {
-	// 	t := tokens[i]
-
-	// 	if t.Info.GetCode() == token.VARIABLE_DECLORAION.GetCode() {
-	// 		variableNameLocation, isFoundVariableNameLocation := searchFirstKeyWord(tokens, i+1)
-
-	// 		if !isFoundVariableNameLocation {
-	// 			panic("variable name decloration INVALID! Cannot find name at positin " + fmt.Sprint(i))
-	// 		}
-
-	// 		variableNameToken := tokens[variableNameLocation]
-
-	// 		variableValueLocation, isFoundVariableValue := searchFirstKeyWord(tokens, variableNameLocation+1)
-
-	// 		if !isFoundVariableValue {
-	// 			panic("variable value not DEFINED! Cannot find value for valiable " + variableNameToken.Info.GetValue())
-	// 		}
-
-	// 		variableValueToken := tokens[variableValueLocation]
-
-	// 		ast.children = append(ast.children, astNode{
-	// 			token.VARIABLE_DECLORAION.GetCode(),
-	// 			[]string{variableNameToken.Value, variableValueToken.Value},
-	// 			[]astNode{},
-	// 		})
-	// 	}
-	// }
-
-	// fmt.Println(ast)
 }
-
-// func eatString(tokens []token.Token, startPosition int) (int, bool) {
-// 	for i := startPosition; i < len(tokens); i++ {
-// 		if tokens[i].Code == token.KEY_WORD.GetCode() {
-// 			return i, true
-// 		}
-// 	}
-
-// 	return 0, false
-// }
-
-// func searchFirstKeyWord(tokens []token.Token, startPosition int) (int, bool) {
-// 	for i := startPosition; i < len(tokens); i++ {
-// 		if tokens[i].Code == token.KEY_WORD.GetCode() {
-// 			return i, true
-// 		}
-// 	}
-
-// 	return 0, false
-// }

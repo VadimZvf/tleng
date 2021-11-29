@@ -7,9 +7,9 @@ import (
 var STRING = "STRING"
 var StringProcessor token.TokenProcessor = proccess
 
-func proccess(buffer token.IBuffer) (token.Token, bool) {
+func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 	if buffer.GetSymbol() != "\"" {
-		return token.Token{}, false
+		return token.Token{}, false, nil
 	}
 
 	// Remove quote mark at start
@@ -30,5 +30,5 @@ func proccess(buffer token.IBuffer) (token.Token, bool) {
 	// Remove quote mark at end
 	buffer.Next()
 
-	return stringToken, true
+	return stringToken, true, nil
 }

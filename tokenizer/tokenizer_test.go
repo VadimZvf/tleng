@@ -20,7 +20,7 @@ func TestStringVariable(t *testing.T) {
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
-	var tokens = tokenizer.GetTokens()
+	var tokens, _ = tokenizer.GetTokens()
 
 	compareTokens(t, tokens[0], token.Token{
 		Code:     token.NEW_LINE,
@@ -56,7 +56,7 @@ func TestCopyVariableByLink(t *testing.T) {
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
-	var tokens = tokenizer.GetTokens()
+	var tokens, _ = tokenizer.GetTokens()
 
 	compareTokens(t, tokens[0], token.Token{
 		Code:     token_variable_decloration.VARIABLE_DECLARAION,
@@ -87,7 +87,7 @@ func TestFunctionDecloration(t *testing.T) {
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
-	var tokens = tokenizer.GetTokens()
+	var tokens, _ = tokenizer.GetTokens()
 
 	compareTokens(t, tokens[0], token.Token{
 		Code:     token_function_declaration.FUNCTION_DECLARATION,
@@ -117,7 +117,7 @@ func TestFunctionDeclorationWithArguments(t *testing.T) {
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
-	var tokens = tokenizer.GetTokens()
+	var tokens, _ = tokenizer.GetTokens()
 
 	compareTokens(t, tokens[0], token.Token{
 		Code:     token_function_declaration.FUNCTION_DECLARATION,
@@ -163,7 +163,7 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
-	var tokens = tokenizer.GetTokens()
+	var tokens, _ = tokenizer.GetTokens()
 
 	compareTokens(t, tokens[0], token.Token{
 		Code:     token.NEW_LINE,

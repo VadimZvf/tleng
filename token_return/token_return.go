@@ -7,9 +7,9 @@ import (
 var RETURN_DECLARATION = "RETURN_DECLARATION"
 var ReturnProcessor token.TokenProcessor = proccess
 
-func proccess(buffer token.IBuffer) (token.Token, bool) {
+func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 	if buffer.GetFullValue() != "return" {
-		return token.Token{}, false
+		return token.Token{}, false, nil
 	}
 
 	var position = buffer.GetPosition()
@@ -17,5 +17,5 @@ func proccess(buffer token.IBuffer) (token.Token, bool) {
 	return token.Token{
 		Code:     RETURN_DECLARATION,
 		Position: position,
-	}, true
+	}, true, nil
 }

@@ -28,33 +28,33 @@ type IBuffer interface {
 	Clear()
 }
 
-type TokenProcessor = func(buffer IBuffer) (foundToken Token, isFoundToken bool)
+type TokenProcessor = func(buffer IBuffer) (foundToken Token, isFoundToken bool, err error)
 
 func createSymbolProcessor(code string, symbol string) TokenProcessor {
-	return func(buffer IBuffer) (foundToken Token, isFoundToken bool) {
+	return func(buffer IBuffer) (foundToken Token, isFoundToken bool, err error) {
 		if buffer.GetSymbol() == symbol {
 			return Token{
 				Code:       code,
 				Position:   buffer.GetPosition(),
 				DebugValue: buffer.GetSymbol(),
-			}, true
+			}, true, nil
 		}
 
-		return Token{}, false
+		return Token{}, false, nil
 	}
 }
 
 func createKeyWordProcessor(code string, keyWord string) TokenProcessor {
-	return func(buffer IBuffer) (foundToken Token, isFoundToken bool) {
+	return func(buffer IBuffer) (foundToken Token, isFoundToken bool, err error) {
 		if buffer.GetValue() == keyWord {
 			return Token{
 				Code:       code,
 				Position:   buffer.GetPosition(),
 				DebugValue: buffer.GetValue(),
-			}, true
+			}, true, nil
 		}
 
-		return Token{}, false
+		return Token{}, false, nil
 	}
 }
 
@@ -104,7 +104,7 @@ func IsLetter(s string) bool {
 
 func ReadWord(buffer IBuffer) TokenParam {
 	var position = buffer.GetPosition()
-	for IsLetter(buffer.GetSymbol()) {
+	for IsLetter(buffer.GetSymbol()) && !buffer.GetIsEnd() {
 		position = buffer.GetPosition()
 		buffer.AddSymbol()
 		buffer.Next()

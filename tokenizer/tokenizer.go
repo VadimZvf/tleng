@@ -38,11 +38,15 @@ func (tknzr *Tokenizer) addToken(token token.Token) {
 	tknzr.tokens = append(tknzr.tokens, token)
 }
 
-func (tknzr *Tokenizer) GetTokens() []token.Token {
+func (tknzr *Tokenizer) GetTokens() ([]token.Token, error) {
 	for {
 		tknzr.buffer.TrimNext()
 
-		keyWordToken, isFoundKeyWordToken := getKeyWordToken(tknzr.buffer)
+		keyWordToken, isFoundKeyWordToken, err := getKeyWordToken(tknzr.buffer)
+
+		if err != nil {
+			return tknzr.tokens, err
+		}
 
 		if isFoundKeyWordToken {
 			tknzr.addToken(keyWordToken)
@@ -66,7 +70,7 @@ func (tknzr *Tokenizer) GetTokens() []token.Token {
 		}
 
 		if tknzr.buffer.GetIsEnd() {
-			return tknzr.tokens
+			return tknzr.tokens, nil
 		}
 
 		tknzr.buffer.Next()
@@ -88,7 +92,7 @@ func getSymbolToken(buffer iBuffer) (token.Token, bool) {
 
 	for i := 0; i < len(tokensArray); i++ {
 		tokenProccessor := tokensArray[i]
-		token, isFound := tokenProccessor(buffer)
+		token, isFound, _ := tokenProccessor(buffer)
 
 		if isFound {
 			return token, true
@@ -98,7 +102,7 @@ func getSymbolToken(buffer iBuffer) (token.Token, bool) {
 	return token.Token{}, false
 }
 
-func getKeyWordToken(buffer iBuffer) (token.Token, bool) {
+func getKeyWordToken(buffer iBuffer) (token.Token, bool, error) {
 	var tokensArray = []token.TokenProcessor{
 		token_return.ReturnProcessor,
 		token_variable_decloration.VariableDeclarationProcessor,
@@ -108,14 +112,18 @@ func getKeyWordToken(buffer iBuffer) (token.Token, bool) {
 
 	for i := 0; i < len(tokensArray); i++ {
 		tokenProccessor := tokensArray[i]
-		token, isFound := tokenProccessor(buffer)
+		token, isFound, err := tokenProccessor(buffer)
+
+		if err != nil {
+			return token, false, err
+		}
 
 		if isFound {
-			return token, true
+			return token, true, nil
 		}
 	}
 
-	return token.Token{}, false
+	return token.Token{}, false, nil
 }
 
 func getUnknownKeyWordToken(buffer iBuffer) token.Token {

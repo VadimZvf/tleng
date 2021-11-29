@@ -5,6 +5,7 @@ type iSource interface {
 }
 
 type Buffer struct {
+	code     string
 	value    string
 	symbol   string
 	source   iSource
@@ -32,9 +33,14 @@ func (buffer *Buffer) GetIsEnd() bool {
 	return buffer.isEnd
 }
 
+func (buffer *Buffer) GetReadedCode() string {
+	return buffer.code
+}
+
 func (buffer *Buffer) Next() {
 	symbol, isEnd := buffer.source.NextSymbol()
 
+	buffer.code = buffer.code + symbol
 	buffer.symbol = symbol
 	buffer.isEnd = isEnd
 	buffer.position = buffer.position + 1
@@ -58,6 +64,7 @@ func CreateBuffer(source iSource) Buffer {
 	symbol, isEnd := source.NextSymbol()
 
 	return Buffer{
+		code:     symbol,
 		value:    "",
 		symbol:   symbol,
 		source:   source,
