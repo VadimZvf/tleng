@@ -204,6 +204,26 @@ func TestParseManyArgument(t *testing.T) {
 	}
 }
 
+func TestErrorNameParsing(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `function ( baz,  foo,     gaz) {}`
+
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var isFound = false
+	var err = error(nil)
+
+	for !buffer.GetIsEnd() && !isFound && err != nil {
+		_, isFound, err = FunctionDeclorationProcessor(&buffer)
+		buffer.TrimNext()
+		buffer.AddSymbol()
+		buffer.Next()
+	}
+
+	if err == nil {
+		t.Errorf("Should save argument")
+	}
+}
+
 func containParam(params []token.TokenParam, target token.TokenParam) bool {
 	for _, param := range params {
 		if param.Name == target.Name && param.Value == target.Value && param.Position == target.Position {
