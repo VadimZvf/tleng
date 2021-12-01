@@ -16,21 +16,10 @@ import (
 	"github.com/fatih/color"
 )
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
 func main() {
 	filePath := os.Args[1]
 
-	fmt.Println("Reading file: " + filePath)
-
-	file, err := os.Open(filePath)
-	check(err)
-
-	var src = source_file.GetSource(file)
+	var src = source_file.GetSource(filePath)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tknzr = tokenizer.GetTokenizer(&buffer)
 
@@ -42,8 +31,6 @@ func main() {
 
 		os.Exit(1)
 	}
-
-	file.Close()
 
 	for _, v := range tokens {
 		color.New(color.FgCyan).Printf(fmt.Sprint(v.Position))
