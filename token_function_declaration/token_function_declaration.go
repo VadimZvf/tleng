@@ -93,9 +93,12 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		}
 	}
 
+	// Skip ")"
+	buffer.Next()
+
 	return token.Token{
 		Code:     FUNCTION_DECLARATION,
-		Position: functionDeclorationStartPosition,
+		Position: position,
 		Params:   append(arguments, functionName),
 	}, true, nil
 }

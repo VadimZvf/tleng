@@ -3,6 +3,7 @@ package token_function_declaration
 import (
 	"testing"
 
+	"github.com/VadimZvf/golang/parser_error"
 	"github.com/VadimZvf/golang/source_mock"
 	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/tokenizer_buffer"
@@ -212,7 +213,7 @@ func TestErrorNameParsing(t *testing.T) {
 	var isFound = false
 	var err = error(nil)
 
-	for !buffer.GetIsEnd() && !isFound && err != nil {
+	for !buffer.GetIsEnd() && !isFound && err == nil {
 		_, isFound, err = FunctionDeclorationProcessor(&buffer)
 		buffer.TrimNext()
 		buffer.AddSymbol()
@@ -220,7 +221,123 @@ func TestErrorNameParsing(t *testing.T) {
 	}
 
 	if err == nil {
-		t.Errorf("Should save argument")
+		t.Errorf("Should return error")
+	}
+
+	re, ok := err.(parser_error.ParserError)
+
+	if !ok {
+		t.Errorf("Should return parser error")
+	}
+
+	if re.Message != "Function should have name" {
+		t.Errorf("Should return function name parsing error")
+	}
+
+	if re.Position != 0 || re.Length != 8 {
+		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	}
+}
+
+func TestErrorDeclorationParsing(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `function foo baz,  foo,     gaz) {}`
+
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var isFound = false
+	var err = error(nil)
+
+	for !buffer.GetIsEnd() && !isFound && err == nil {
+		_, isFound, err = FunctionDeclorationProcessor(&buffer)
+		buffer.TrimNext()
+		buffer.AddSymbol()
+		buffer.Next()
+	}
+
+	if err == nil {
+		t.Errorf("Should return error")
+	}
+
+	re, ok := err.(parser_error.ParserError)
+
+	if !ok {
+		t.Errorf("Should return parser error")
+	}
+
+	if re.Message != "Wrong function declaration syntax" {
+		t.Errorf("Should return function parsing error. Recived: \"%s\"", re.Message)
+	}
+
+	if re.Position != 0 || re.Length != 13 {
+		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	}
+}
+
+func TestErrorSecondBracketParsing(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `function foo (gaz {}`
+
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var isFound = false
+	var err = error(nil)
+
+	for !buffer.GetIsEnd() && !isFound && err == nil {
+		_, isFound, err = FunctionDeclorationProcessor(&buffer)
+		buffer.TrimNext()
+		buffer.AddSymbol()
+		buffer.Next()
+	}
+
+	if err == nil {
+		t.Errorf("Should return error")
+	}
+
+	re, ok := err.(parser_error.ParserError)
+
+	if !ok {
+		t.Errorf("Should return parser error")
+	}
+
+	if re.Message != "Wrong function declaration syntax" {
+		t.Errorf("Should return function parsing error. Recived: \"%s\"", re.Message)
+	}
+
+	if re.Position != 0 || re.Length != 18 {
+		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	}
+}
+
+func TestErrorArgumentsParsing(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `function foo (  , a) {}`
+
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var isFound = false
+	var err = error(nil)
+
+	for !buffer.GetIsEnd() && !isFound && err == nil {
+		_, isFound, err = FunctionDeclorationProcessor(&buffer)
+		buffer.TrimNext()
+		buffer.AddSymbol()
+		buffer.Next()
+	}
+
+	if err == nil {
+		t.Errorf("Should return error")
+	}
+
+	re, ok := err.(parser_error.ParserError)
+
+	if !ok {
+		t.Errorf("Should return parser error")
+	}
+
+	if re.Message != "Wrong function declaration syntax" {
+		t.Errorf("Should return function parsing error. Recived: \"%s\"", re.Message)
+	}
+
+	if re.Position != 0 || re.Length != 16 {
+		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
 	}
 }
 
