@@ -1,8 +1,6 @@
 package parser_error_printer
 
 import (
-	"fmt"
-
 	"github.com/VadimZvf/golang/parser_error"
 )
 
@@ -31,8 +29,6 @@ func PrintError(buffer iBuffer, std iStdout, err error) {
 		std.PrintSymbol(string(code[i]))
 	}
 
-	fmt.Println("re.Position ", re.Position)
-	fmt.Println("re.Length ", re.Length)
 	// Print error parth
 	std.SetErrorColor()
 	for ; i <= re.Position+re.Length; i++ {

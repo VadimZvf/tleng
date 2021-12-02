@@ -45,8 +45,9 @@ func (buffer *Buffer) Next() {
 
 	if buffer.spiedSymbol != rune(0) {
 		buffer.symbol = buffer.spiedSymbol
-		buffer.spiedSymbol = rune(0)
 		buffer.isEnd = buffer.isSpiedEnd
+		buffer.code = buffer.code + string(buffer.symbol)
+		buffer.spiedSymbol = rune(0)
 		return
 	}
 
