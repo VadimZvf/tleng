@@ -8,14 +8,14 @@ var STRING = "STRING"
 var StringProcessor token.TokenProcessor = proccess
 
 func proccess(buffer token.IBuffer) (token.Token, bool, error) {
-	if buffer.GetSymbol() != "\"" {
+	if buffer.GetSymbol() != '"' {
 		return token.Token{}, false, nil
 	}
 
 	// Remove quote mark at start
 	buffer.Next()
 
-	for buffer.GetSymbol() != "\"" && !buffer.GetIsEnd() {
+	for buffer.GetSymbol() != '"' && !buffer.GetIsEnd() {
 		buffer.AddSymbol()
 		buffer.Next()
 	}

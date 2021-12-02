@@ -2,15 +2,15 @@ package source_mock
 
 type SimpleSourceMock struct {
 	IsEnd           bool
-	NextSymbolValue string
+	NextSymbolValue rune
 }
 
-func (source *SimpleSourceMock) NextSymbol() (symbol string, isEnd bool) {
+func (source *SimpleSourceMock) NextSymbol() (rune, bool) {
 	return source.NextSymbolValue, source.IsEnd
 }
 
 func GetSimpleSource() *SimpleSourceMock {
-	return &SimpleSourceMock{false, "a"}
+	return &SimpleSourceMock{false, rune(0)}
 }
 
 type SourceMock struct {
@@ -19,14 +19,17 @@ type SourceMock struct {
 	position int
 }
 
-func (source *SourceMock) NextSymbol() (symbol string, isEnd bool) {
+func (source *SourceMock) NextSymbol() (rune, bool) {
 	source.position += 1
 
 	if source.position >= len(source.FullText) {
-		return "", true
+		return rune(0), true
 	}
 
-	return string(source.FullText[source.position]), false
+	var symbol = source.FullText[source.position]
+	var a = rune(symbol)
+
+	return a, false
 }
 
 func GetSourceMock() *SourceMock {

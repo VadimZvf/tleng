@@ -19,24 +19,25 @@ type Token struct {
 type IBuffer interface {
 	GetValue() (value string)
 	GetFullValue() (value string)
-	GetSymbol() (symbol string)
+	GetSymbol() (symbol rune)
 	GetPosition() int
 	GetIsEnd() bool
 	Next()
 	TrimNext()
 	AddSymbol()
+	PeekForward() rune
 	Clear()
 }
 
 type TokenProcessor = func(buffer IBuffer) (foundToken Token, isFoundToken bool, err error)
 
-func createSymbolProcessor(code string, symbol string) TokenProcessor {
+func createSymbolProcessor(code string, symbol rune) TokenProcessor {
 	return func(buffer IBuffer) (foundToken Token, isFoundToken bool, err error) {
 		if buffer.GetSymbol() == symbol {
 			return Token{
 				Code:       code,
 				Position:   buffer.GetPosition(),
-				DebugValue: buffer.GetSymbol(),
+				DebugValue: string(buffer.GetSymbol()),
 			}, true, nil
 		}
 
@@ -59,31 +60,31 @@ func createKeyWordProcessor(code string, keyWord string) TokenProcessor {
 }
 
 var NEW_LINE = "NEW_LINE"
-var NewLineProcessor = createSymbolProcessor(NEW_LINE, "\n")
+var NewLineProcessor = createSymbolProcessor(NEW_LINE, '\n')
 
 var ASSIGNMENT = "ASSIGNMENT"
-var AssignmentProcessor = createSymbolProcessor(ASSIGNMENT, "=")
+var AssignmentProcessor = createSymbolProcessor(ASSIGNMENT, '=')
 
 var OPEN_BLOCK = "OPEN_BLOCK"
-var OpenBlockProcessor = createSymbolProcessor(OPEN_BLOCK, "{")
+var OpenBlockProcessor = createSymbolProcessor(OPEN_BLOCK, '{')
 
 var CLOSE_BLOCK = "CLOSE_BLOCK"
-var CloseBlockProcessor = createSymbolProcessor(CLOSE_BLOCK, "}")
+var CloseBlockProcessor = createSymbolProcessor(CLOSE_BLOCK, '}')
 
 var OPEN_EXPRESSION = "OPEN_EXPRESSION"
-var OpenExpressionProcessor = createSymbolProcessor(OPEN_EXPRESSION, "(")
+var OpenExpressionProcessor = createSymbolProcessor(OPEN_EXPRESSION, '(')
 
 var CLOSE_EXPRESSION = "CLOSE_EXPRESSION"
-var CloseExpressionProcessor = createSymbolProcessor(CLOSE_EXPRESSION, ")")
+var CloseExpressionProcessor = createSymbolProcessor(CLOSE_EXPRESSION, ')')
 
 var END_LINE = "END_LINE"
-var EndLineProcessor = createSymbolProcessor(END_LINE, ";")
+var EndLineProcessor = createSymbolProcessor(END_LINE, ';')
 
 var COMMA = "COMMA"
-var CommaProcessor = createSymbolProcessor(COMMA, ",")
+var CommaProcessor = createSymbolProcessor(COMMA, ',')
 
 var DOT = "DOT"
-var DotProcessor = createSymbolProcessor(DOT, ".")
+var DotProcessor = createSymbolProcessor(DOT, '.')
 
 var VARIABLE_DECLORAION = "VARIABLE_DECLORAION"
 var VariableDeclorationProcessor = createKeyWordProcessor(VARIABLE_DECLORAION, "const")
@@ -93,9 +94,17 @@ var KEY_WORD = "KEY_WORD"
 
 // Utils
 // =======================================
-func IsLetter(s string) bool {
+func IsLetter(symbol rune) bool {
+	return (symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z')
+}
+
+func IsKeyWordSymbol(symbol rune) bool {
+	return IsLetter(symbol) || symbol == '_'
+}
+
+func IsValidKeyWord(s string) bool {
 	for _, r := range s {
-		if ((r < 'a' || r > 'z') && (r < 'A' || r > 'Z')) && r != '_' {
+		if !IsKeyWordSymbol(r) {
 			return false
 		}
 	}
@@ -104,7 +113,7 @@ func IsLetter(s string) bool {
 
 func ReadWord(buffer IBuffer) TokenParam {
 	var position = buffer.GetPosition()
-	for IsLetter(buffer.GetSymbol()) && !buffer.GetIsEnd() {
+	for IsKeyWordSymbol(buffer.GetSymbol()) && !buffer.GetIsEnd() {
 		position = buffer.GetPosition()
 		buffer.AddSymbol()
 		buffer.Next()

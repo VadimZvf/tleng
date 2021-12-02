@@ -11,7 +11,7 @@ var VariableDeclarationProcessor token.TokenProcessor = proccess
 var VARIABLE_NAME_PARAM = "NAME"
 
 func proccess(buffer token.IBuffer) (token.Token, bool, error) {
-	if buffer.GetFullValue() != "const" {
+	if buffer.GetFullValue() != "const" || token.IsKeyWordSymbol(buffer.PeekForward()) {
 		return token.Token{}, false, nil
 	}
 

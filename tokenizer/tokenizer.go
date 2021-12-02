@@ -11,12 +11,13 @@ import (
 type iBuffer interface {
 	GetValue() (value string)
 	GetFullValue() (value string)
-	GetSymbol() (symbol string)
+	GetSymbol() (symbol rune)
 	GetPosition() int
 	GetIsEnd() bool
 	Next()
 	TrimNext()
 	AddSymbol()
+	PeekForward() rune
 	Clear()
 }
 

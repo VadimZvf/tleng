@@ -3,6 +3,7 @@ package source_file
 import (
 	"fmt"
 	"os"
+	"unicode/utf8"
 )
 
 type Source struct {
@@ -32,8 +33,10 @@ func (source *Source) Close() {
 	source.file.Close()
 }
 
-func (source Source) NextSymbol() (symbol string, isEnd bool) {
+func (source Source) NextSymbol() (rune, bool) {
 	n1, err := source.file.Read(source.buffer)
 
-	return string(source.buffer[:n1]), err != nil
+	symbol, _ := utf8.DecodeRune(source.buffer[:n1])
+
+	return symbol, err != nil
 }

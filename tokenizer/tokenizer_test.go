@@ -50,6 +50,46 @@ func TestStringVariable(t *testing.T) {
 	})
 }
 
+func TestKeywordLikeVariableDecloration(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `constA;`
+
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var tokenizer = GetTokenizer(&buffer)
+	var tokens, _ = tokenizer.GetTokens()
+
+	compareTokens(t, tokens[0], token.Token{
+		Code:     token.KEY_WORD,
+		Value:    "constA",
+		Position: 5,
+	})
+}
+
+func TestKeywordLikeFunctionDecloration(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `functionA();`
+
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var tokenizer = GetTokenizer(&buffer)
+	var tokens, _ = tokenizer.GetTokens()
+
+	compareTokens(t, tokens[0], token.Token{
+		Code:     token.KEY_WORD,
+		Value:    "functionA",
+		Position: 8,
+	})
+
+	compareTokens(t, tokens[1], token.Token{
+		Code:     token.OPEN_EXPRESSION,
+		Position: 9,
+	})
+
+	compareTokens(t, tokens[2], token.Token{
+		Code:     token.CLOSE_EXPRESSION,
+		Position: 10,
+	})
+}
+
 func TestCopyVariableByLink(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `const a = b;`
@@ -78,6 +118,26 @@ func TestCopyVariableByLink(t *testing.T) {
 		Code:     token.KEY_WORD,
 		Position: 10,
 		Value:    "b",
+	})
+}
+
+func TestVariableWithTokenName(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `const functionA;`
+
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var tokenizer = GetTokenizer(&buffer)
+	var tokens, _ = tokenizer.GetTokens()
+
+	compareTokens(t, tokens[0], token.Token{
+		Code:     token_variable_decloration.VARIABLE_DECLARAION,
+		Position: 4,
+	})
+
+	checkParam(t, tokens[0], token.TokenParam{
+		Name:     token_variable_decloration.VARIABLE_NAME_PARAM,
+		Value:    "functionA",
+		Position: 14,
 	})
 }
 

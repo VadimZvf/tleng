@@ -24,9 +24,10 @@ func TestGetValue(t *testing.T) {
 	buffer := CreateBuffer(source)
 	value := buffer.GetValue()
 	if value != "" {
-		t.Errorf("Buffer should return embty value on start")
+		t.Errorf("Buffer should return empty value on start. But receive: \"%s\"", value)
 	}
 
+	source.NextSymbolValue = 'a'
 	buffer.Next()
 	buffer.AddSymbol()
 	value = buffer.GetValue()
@@ -34,10 +35,10 @@ func TestGetValue(t *testing.T) {
 		t.Errorf("Buffer should add symbol")
 	}
 
-	source.NextSymbolValue = "b"
+	source.NextSymbolValue = 'b'
 	buffer.Next()
 	buffer.AddSymbol()
-	source.NextSymbolValue = "c"
+	source.NextSymbolValue = 'c'
 	buffer.Next()
 	buffer.AddSymbol()
 	value = buffer.GetValue()
@@ -50,9 +51,10 @@ func TestNext(t *testing.T) {
 	var source = source_mock.GetSimpleSource()
 	buffer := CreateBuffer(source)
 
+	source.NextSymbolValue = 'a'
 	buffer.Next()
 	symbol := buffer.GetSymbol()
-	if symbol != "a" {
+	if symbol != 'a' {
 		t.Errorf("Buffer should return symbol")
 	}
 
@@ -62,13 +64,13 @@ func TestNext(t *testing.T) {
 	}
 
 	source.IsEnd = true
-	source.NextSymbolValue = "g"
+	source.NextSymbolValue = 'g'
 
 	buffer.Next()
 	symbol = buffer.GetSymbol()
 
-	if symbol != "g" {
-		t.Errorf("Buffer should return symbol")
+	if symbol == 'g' {
+		t.Errorf("Buffer should't return symbol at end")
 	}
 
 	isEnd = buffer.GetIsEnd()
@@ -99,31 +101,14 @@ func TestGetPosition(t *testing.T) {
 	}
 }
 
-type SourceMockWithContent struct {
-	fullText string
-	position int
-}
-
-func (source *SourceMockWithContent) NextSymbol() (symbol string, isEnd bool) {
-	source.position = source.position + 1
-
-	if source.position >= len(source.fullText) {
-		return "", true
-	}
-
-	return string(source.fullText[source.position]), false
-}
-
 func TestTrimNext(t *testing.T) {
-	var source = SourceMockWithContent{
-		fullText: "            wow    ",
-		position: -1,
-	}
-	buffer := CreateBuffer(&source)
+	var source = source_mock.GetSourceMock()
+	source.FullText = "            wow    "
+	buffer := CreateBuffer(source)
 	buffer.TrimNext()
 	symbol := buffer.GetSymbol()
-	if symbol != "w" {
-		t.Errorf("Buffer should trim spaces")
+	if symbol != 'w' {
+		t.Errorf("Buffer should trim spaces. But received: %c", symbol)
 	}
 
 	position := buffer.GetPosition()
@@ -133,14 +118,12 @@ func TestTrimNext(t *testing.T) {
 }
 
 func TestTrimNextWothoutSpace(t *testing.T) {
-	var source = SourceMockWithContent{
-		fullText: "test text",
-		position: -1,
-	}
-	buffer := CreateBuffer(&source)
+	var source = source_mock.GetSourceMock()
+	source.FullText = "test text"
+	buffer := CreateBuffer(source)
 	buffer.TrimNext()
 	symbol := buffer.GetSymbol()
-	if symbol != "t" {
+	if symbol != 't' {
 		t.Errorf("Buffer should trim spaces")
 	}
 

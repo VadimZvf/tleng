@@ -10,11 +10,11 @@ var FunctionDeclorationProcessor = proccess
 var FUNCTION_NAME_PARAM = "NAME"
 var FUNCTION_ARGUMENT_PARAM = "ARGUMENT"
 
-func readWordsWithSeporator(buffer token.IBuffer, seporator string) []token.TokenParam {
+func readWordsWithSeporator(buffer token.IBuffer, seporator rune) []token.TokenParam {
 	var words = []token.TokenParam{}
 	buffer.TrimNext()
 
-	for token.IsLetter(buffer.GetSymbol()) {
+	for token.IsKeyWordSymbol(buffer.GetSymbol()) {
 		words = append(words, token.ReadWord(buffer))
 		buffer.Clear()
 		buffer.TrimNext()
@@ -32,7 +32,7 @@ const functionDeclorationName = "function"
 const functionDeclorationNameLength = len(functionDeclorationName)
 
 func proccess(buffer token.IBuffer) (token.Token, bool, error) {
-	if buffer.GetFullValue() != functionDeclorationName {
+	if buffer.GetFullValue() != functionDeclorationName || token.IsKeyWordSymbol(buffer.PeekForward()) {
 		return token.Token{}, false, nil
 	}
 
@@ -59,7 +59,7 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 	buffer.Clear()
 	buffer.TrimNext()
 
-	if buffer.GetSymbol() != "(" {
+	if buffer.GetSymbol() != '(' {
 		return token.Token{}, false, parser_error.ParserError{
 			Message:  "Wrong function declaration syntax",
 			Position: functionDeclorationStartPosition,
@@ -70,7 +70,7 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 	// Skip "("
 	buffer.Next()
 
-	var arguments = readWordsWithSeporator(buffer, ",")
+	var arguments = readWordsWithSeporator(buffer, ',')
 
 	for i := 0; i < len(arguments); i++ {
 		param := &arguments[i]
@@ -85,7 +85,7 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		}
 	}
 
-	if buffer.GetSymbol() != ")" {
+	if buffer.GetSymbol() != ')' {
 		return token.Token{}, false, parser_error.ParserError{
 			Message:  "Wrong function declaration syntax",
 			Position: functionDeclorationStartPosition,
