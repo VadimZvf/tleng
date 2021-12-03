@@ -10,9 +10,7 @@ import (
 
 func TestReturnShouldNotBeFound(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		ret urn
-	`
+	src.FullText = `returnfoo`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var token = token.Token{}
@@ -36,9 +34,7 @@ func TestReturnShouldNotBeFound(t *testing.T) {
 
 func TestEmptyReturn(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `
-        return
-	`
+	src.FullText = `return`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var token = token.Token{}
@@ -55,20 +51,11 @@ func TestEmptyReturn(t *testing.T) {
 		t.Errorf("Should find token")
 	}
 
-	if token.Code != "RETURN_DECLARATION" {
+	if token.Code != RETURN_DECLARATION {
 		t.Errorf("Should find token")
 	}
 
-	if token.Position != 15 {
-		t.Errorf("Should save position")
+	if token.Position != 5 {
+		t.Errorf("Should save position. But receive position: %d", token.Position)
 	}
-}
-
-func containParam(params []token.TokenParam, target token.TokenParam) bool {
-	for _, param := range params {
-		if param.Name == target.Name && param.Value == target.Value && param.Position == target.Position {
-			return true
-		}
-	}
-	return false
 }

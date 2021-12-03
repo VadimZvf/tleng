@@ -21,6 +21,13 @@ go test
 cd ..
 echo ""
 
+echo "Return declaration token"
+echo "======================"
+cd token_return
+go test
+cd ..
+echo ""
+
 echo "Variable declaration token"
 echo "======================"
 cd token_variable_decloration
