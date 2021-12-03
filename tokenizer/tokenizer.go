@@ -1,8 +1,11 @@
 package tokenizer
 
 import (
+	"github.com/VadimZvf/golang/parser_error"
 	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/token_function_declaration"
+	"github.com/VadimZvf/golang/token_number"
+	"github.com/VadimZvf/golang/token_read_property"
 	"github.com/VadimZvf/golang/token_return"
 	"github.com/VadimZvf/golang/token_string"
 	"github.com/VadimZvf/golang/token_variable_decloration"
@@ -54,10 +57,24 @@ func (tknzr *Tokenizer) GetTokens() ([]token.Token, error) {
 			tknzr.buffer.Clear()
 		}
 
-		symbolToken, isFoundSymbolToken := getSymbolToken(tknzr.buffer)
+		symbolToken, isFoundSymbolToken, err := getSymbolToken(tknzr.buffer)
+
+		if err != nil {
+			return tknzr.tokens, err
+		}
 
 		if !isFoundKeyWordToken && !isFoundSymbolToken {
-			tknzr.buffer.AddSymbol()
+			if !token.IsKeyWordSymbol(tknzr.buffer.GetSymbol()) && !tknzr.buffer.GetIsEnd() {
+				return tknzr.tokens, parser_error.ParserError{
+					Message:  "Syntax error, unexpected symbol: " + string(tknzr.buffer.GetSymbol()),
+					Position: tknzr.buffer.GetPosition() - 1,
+					Length:   1,
+				}
+			}
+
+			if !tknzr.buffer.GetIsEnd() {
+				tknzr.buffer.AddSymbol()
+			}
 		}
 
 		// Unknown token, maybe its reference to variable
@@ -78,7 +95,7 @@ func (tknzr *Tokenizer) GetTokens() ([]token.Token, error) {
 	}
 }
 
-func getSymbolToken(buffer iBuffer) (token.Token, bool) {
+func getSymbolToken(buffer iBuffer) (token.Token, bool, error) {
 	var tokensArray = []token.TokenProcessor{
 		token.NewLineProcessor,
 		token.AssignmentProcessor,
@@ -87,24 +104,29 @@ func getSymbolToken(buffer iBuffer) (token.Token, bool) {
 		token.OpenExpressionProcessor,
 		token.CloseExpressionProcessor,
 		token.EndLineProcessor,
-		token.DotProcessor,
 		token.CommaProcessor,
+		token_read_property.ReadPropertyProcessor,
 	}
 
 	for i := 0; i < len(tokensArray); i++ {
 		tokenProccessor := tokensArray[i]
-		token, isFound, _ := tokenProccessor(buffer)
+		token, isFound, err := tokenProccessor(buffer)
+
+		if err != nil {
+			return token, false, err
+		}
 
 		if isFound {
-			return token, true
+			return token, true, nil
 		}
 	}
 
-	return token.Token{}, false
+	return token.Token{}, false, nil
 }
 
 func getKeyWordToken(buffer iBuffer) (token.Token, bool, error) {
 	var tokensArray = []token.TokenProcessor{
+		token_number.NumberProcessor,
 		token_return.ReturnProcessor,
 		token_variable_decloration.VariableDeclarationProcessor,
 		token_function_declaration.FunctionDeclorationProcessor,

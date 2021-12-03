@@ -31,7 +31,7 @@ func PrintError(buffer iBuffer, std iStdout, err error) {
 
 	// Print error parth
 	std.SetErrorColor()
-	for ; i <= re.Position+re.Length; i++ {
+	for ; i < re.Position+re.Length; i++ {
 		std.PrintSymbol(string(code[i]))
 	}
 	std.SetDefaultColor()

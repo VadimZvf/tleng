@@ -22,6 +22,14 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 	buffer.TrimNext()
 	buffer.Clear()
 
+	if token.IsNumber(buffer.GetSymbol()) {
+		return token.Token{}, false, parser_error.ParserError{
+			Message:  "Syntax error, variable cannot start with number",
+			Position: position - 4,
+			Length:   buffer.GetPosition() - position + 5,
+		}
+	}
+
 	var variableName = token.ReadWord(buffer)
 	variableName.Name = VARIABLE_NAME_PARAM
 

@@ -3,6 +3,7 @@ package tokenizer
 import (
 	"testing"
 
+	"github.com/VadimZvf/golang/parser_error"
 	"github.com/VadimZvf/golang/source_mock"
 	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/token_function_declaration"
@@ -271,6 +272,41 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 		Code:     token.CLOSE_BLOCK,
 		Position: 48,
 	})
+}
+
+func TestSyntaxError(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `
+		const a = 123;
+
+		-
+
+		function foo() {
+
+		}
+	`
+
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var tokenizer = GetTokenizer(&buffer)
+	var _, err = tokenizer.GetTokens()
+
+	if err == nil {
+		t.Errorf("Should return error")
+	}
+
+	re, ok := err.(parser_error.ParserError)
+
+	if !ok {
+		t.Errorf("Should return parser error")
+	}
+
+	if re.Message != "Syntax error, unexpected symbol: -" {
+		t.Errorf("Should return syntax error message, but receinve: \"%s\"", re.Message)
+	}
+
+	if re.Position != 20 || re.Length != 1 {
+		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	}
 }
 
 /// Utils

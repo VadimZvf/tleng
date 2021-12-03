@@ -83,9 +83,6 @@ var EndLineProcessor = createSymbolProcessor(END_LINE, ';')
 var COMMA = "COMMA"
 var CommaProcessor = createSymbolProcessor(COMMA, ',')
 
-var DOT = "DOT"
-var DotProcessor = createSymbolProcessor(DOT, '.')
-
 var VARIABLE_DECLORAION = "VARIABLE_DECLORAION"
 var VariableDeclorationProcessor = createKeyWordProcessor(VARIABLE_DECLORAION, "const")
 
@@ -94,12 +91,16 @@ var KEY_WORD = "KEY_WORD"
 
 // Utils
 // =======================================
+func IsNumber(symbol rune) bool {
+	return (symbol >= '0' && symbol <= '9')
+}
+
 func IsLetter(symbol rune) bool {
 	return (symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z')
 }
 
 func IsKeyWordSymbol(symbol rune) bool {
-	return IsLetter(symbol) || symbol == '_'
+	return IsLetter(symbol) || IsNumber(symbol) || symbol == '_'
 }
 
 func IsValidKeyWord(s string) bool {

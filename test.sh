@@ -28,6 +28,20 @@ go test
 cd ..
 echo ""
 
+echo "Property read token"
+echo "======================"
+cd token_read_property
+go test
+cd ..
+echo ""
+
+echo "Number token"
+echo "======================"
+cd token_number
+go test
+cd ..
+echo ""
+
 echo "Tokenizer"
 echo "======================"
 cd tokenizer
