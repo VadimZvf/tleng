@@ -14,8 +14,7 @@ type Token struct {
 	// Simple content like string content
 	Value string
 	// Detail information, like function arguments, return values etc...
-	Params     []TokenParam
-	DebugValue string
+	Params []TokenParam
 }
 
 type IBuffer interface {
@@ -42,7 +41,7 @@ func createSymbolProcessor(code string, symbol rune) TokenProcessor {
 				Code:          code,
 				StartPosition: position,
 				EndPosition:   position,
-				DebugValue:    string(symbol),
+				Value:         string(symbol),
 			}, true, nil
 		}
 

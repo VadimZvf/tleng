@@ -33,6 +33,5 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		StartPosition: startPosition,
 		EndPosition:   buffer.GetPosition() - 1,
 		Value:         buffer.GetValue(),
-		DebugValue:    buffer.GetValue(),
 	}, true, nil
 }

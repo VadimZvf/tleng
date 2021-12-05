@@ -28,6 +28,6 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		Code:          READ_PROPERTY,
 		StartPosition: startPosition,
 		EndPosition:   startPosition,
-		DebugValue:    ".",
+		Value:         ".",
 	}, true, nil
 }

@@ -27,7 +27,6 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		Value:         buffer.GetValue(),
 		StartPosition: startPosition,
 		EndPosition:   buffer.GetPosition(),
-		DebugValue:    buffer.GetValue(),
 	}
 
 	// Remove quote mark at end
