@@ -7,9 +7,8 @@ import (
 	"github.com/VadimZvf/golang/parser_error_printer"
 	"github.com/VadimZvf/golang/source_file"
 	"github.com/VadimZvf/golang/stdout"
-	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/token_function_declaration"
-	"github.com/VadimZvf/golang/token_variable_decloration"
+	"github.com/VadimZvf/golang/token_variable_declaration"
 	"github.com/VadimZvf/golang/tokenizer"
 	"github.com/VadimZvf/golang/tokenizer_buffer"
 
@@ -33,17 +32,14 @@ func main() {
 	}
 
 	for _, v := range tokens {
-		color.New(color.FgCyan).Printf(fmt.Sprint(v.Position))
+		color.New(color.FgCyan).Printf(fmt.Sprint(v.StartPosition))
 		color.New(color.FgCyan).Printf(" type: ")
 		color.New(color.FgYellow).Printf(v.Code)
 
 		color.New(color.FgCyan).Printf(" value: \"")
+		color.New(color.FgGreen).Printf(v.DebugValue)
 
-		if v.Code != token.NEW_LINE {
-			color.New(color.FgGreen).Printf(v.DebugValue)
-		}
-
-		if v.Code == token_function_declaration.FUNCTION_DECLARATION || v.Code == token_variable_decloration.VARIABLE_DECLARAION {
+		if v.Code == token_function_declaration.FUNCTION_DECLARATION || v.Code == token_variable_declaration.VARIABLE_DECLARAION {
 			for _, param := range v.Params {
 				color.New(color.FgGreen).Printf(param.Name)
 				color.New(color.FgGreen).Printf("=")

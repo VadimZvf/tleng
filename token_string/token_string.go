@@ -12,6 +12,8 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		return token.Token{}, false, nil
 	}
 
+	var startPosition = buffer.GetPosition()
+
 	// Remove quote mark at start
 	buffer.Next()
 
@@ -21,10 +23,11 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 	}
 
 	stringToken := token.Token{
-		Code:       STRING,
-		Value:      buffer.GetValue(),
-		Position:   buffer.GetPosition(),
-		DebugValue: buffer.GetValue(),
+		Code:          STRING,
+		Value:         buffer.GetValue(),
+		StartPosition: startPosition,
+		EndPosition:   buffer.GetPosition(),
+		DebugValue:    buffer.GetValue(),
 	}
 
 	// Remove quote mark at end

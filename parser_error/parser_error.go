@@ -1,19 +1,19 @@
 package parser_error
 
 type ParserError struct {
-	Message  string
-	Position int
-	Length   int
+	Message       string
+	StartPosition int
+	EndPosition   int
 }
 
 func (err ParserError) Error() string {
 	return err.Message
 }
 
-func CreateError(message string, position int, length int) ParserError {
+func CreateError(message string, start int, end int) ParserError {
 	return ParserError{
-		Message:  message,
-		Position: position,
-		Length:   length,
+		Message:       message,
+		StartPosition: start,
+		EndPosition:   end,
 	}
 }

@@ -29,16 +29,15 @@ func readWordsWithSeporator(buffer token.IBuffer, seporator rune) []token.TokenP
 }
 
 const functionDeclorationName = "function"
-const functionDeclorationNameLength = len(functionDeclorationName)
 
 func proccess(buffer token.IBuffer) (token.Token, bool, error) {
-	if buffer.GetFullValue() != functionDeclorationName || token.IsKeyWordSymbol(buffer.PeekForward()) {
+	if !buffer.IsStartsWith(functionDeclorationName + " ") {
 		return token.Token{}, false, nil
 	}
 
-	var position = buffer.GetPosition()
-	var functionDeclorationStartPosition = position - functionDeclorationNameLength + 1
+	var functionDeclorationStartPosition = buffer.GetPosition()
 
+	buffer.Eat(len(functionDeclorationName))
 	// Go to next symbol
 	buffer.Next()
 
@@ -50,9 +49,9 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 
 	if len(functionName.Value) == 0 {
 		return token.Token{}, false, parser_error.ParserError{
-			Message:  "Function should have name",
-			Position: functionDeclorationStartPosition,
-			Length:   functionDeclorationNameLength,
+			Message:       "Function should have name",
+			StartPosition: functionDeclorationStartPosition,
+			EndPosition:   buffer.GetPosition(),
 		}
 	}
 
@@ -61,9 +60,9 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 
 	if buffer.GetSymbol() != '(' {
 		return token.Token{}, false, parser_error.ParserError{
-			Message:  "Wrong function declaration syntax",
-			Position: functionDeclorationStartPosition,
-			Length:   buffer.GetPosition() - functionDeclorationStartPosition,
+			Message:       "Wrong function declaration syntax",
+			StartPosition: functionDeclorationStartPosition,
+			EndPosition:   buffer.GetPosition(),
 		}
 	}
 
@@ -78,18 +77,18 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 
 		if len(param.Value) == 0 {
 			return token.Token{}, false, parser_error.ParserError{
-				Message:  "Function argument should have name",
-				Position: functionDeclorationStartPosition,
-				Length:   buffer.GetPosition() - functionDeclorationStartPosition,
+				Message:       "Function argument should have name",
+				StartPosition: functionDeclorationStartPosition,
+				EndPosition:   buffer.GetPosition(),
 			}
 		}
 	}
 
 	if buffer.GetSymbol() != ')' {
 		return token.Token{}, false, parser_error.ParserError{
-			Message:  "Wrong function declaration syntax",
-			Position: functionDeclorationStartPosition,
-			Length:   buffer.GetPosition() - functionDeclorationStartPosition,
+			Message:       "Wrong function declaration syntax",
+			StartPosition: functionDeclorationStartPosition,
+			EndPosition:   buffer.GetPosition(),
 		}
 	}
 
@@ -97,8 +96,9 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 	buffer.Next()
 
 	return token.Token{
-		Code:     FUNCTION_DECLARATION,
-		Position: position,
-		Params:   append(arguments, functionName),
+		Code:          FUNCTION_DECLARATION,
+		StartPosition: functionDeclorationStartPosition,
+		EndPosition:   buffer.GetPosition() - 1,
+		Params:        append(arguments, functionName),
 	}, true, nil
 }

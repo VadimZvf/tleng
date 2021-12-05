@@ -1,14 +1,16 @@
 package token
 
 type TokenParam struct {
-	Name     string
-	Value    string
-	Position int
+	Name          string
+	Value         string
+	StartPosition int
+	EndPosition   int
 }
 
 type Token struct {
-	Code     string
-	Position int
+	Code          string
+	StartPosition int
+	EndPosition   int
 	// Simple content like string content
 	Value string
 	// Detail information, like function arguments, return values etc...
@@ -18,14 +20,14 @@ type Token struct {
 
 type IBuffer interface {
 	GetValue() (value string)
-	GetFullValue() (value string)
 	GetSymbol() (symbol rune)
 	GetPosition() int
 	GetIsEnd() bool
 	Next()
 	TrimNext()
 	AddSymbol()
-	PeekForward() rune
+	IsStartsWith(value string) bool
+	Eat(length int)
 	Clear()
 }
 
@@ -34,33 +36,19 @@ type TokenProcessor = func(buffer IBuffer) (foundToken Token, isFoundToken bool,
 func createSymbolProcessor(code string, symbol rune) TokenProcessor {
 	return func(buffer IBuffer) (foundToken Token, isFoundToken bool, err error) {
 		if buffer.GetSymbol() == symbol {
+			var position = buffer.GetPosition()
+			buffer.Eat(1)
 			return Token{
-				Code:       code,
-				Position:   buffer.GetPosition(),
-				DebugValue: string(buffer.GetSymbol()),
+				Code:          code,
+				StartPosition: position,
+				EndPosition:   position,
+				DebugValue:    string(symbol),
 			}, true, nil
 		}
 
 		return Token{}, false, nil
 	}
 }
-
-func createKeyWordProcessor(code string, keyWord string) TokenProcessor {
-	return func(buffer IBuffer) (foundToken Token, isFoundToken bool, err error) {
-		if buffer.GetValue() == keyWord {
-			return Token{
-				Code:       code,
-				Position:   buffer.GetPosition(),
-				DebugValue: buffer.GetValue(),
-			}, true, nil
-		}
-
-		return Token{}, false, nil
-	}
-}
-
-var NEW_LINE = "NEW_LINE"
-var NewLineProcessor = createSymbolProcessor(NEW_LINE, '\n')
 
 var ASSIGNMENT = "ASSIGNMENT"
 var AssignmentProcessor = createSymbolProcessor(ASSIGNMENT, '=')
@@ -82,9 +70,6 @@ var EndLineProcessor = createSymbolProcessor(END_LINE, ';')
 
 var COMMA = "COMMA"
 var CommaProcessor = createSymbolProcessor(COMMA, ',')
-
-var VARIABLE_DECLORAION = "VARIABLE_DECLORAION"
-var VariableDeclorationProcessor = createKeyWordProcessor(VARIABLE_DECLORAION, "const")
 
 var PROGRAMM = "PROGRAMM"
 var KEY_WORD = "KEY_WORD"
@@ -113,15 +98,16 @@ func IsValidKeyWord(s string) bool {
 }
 
 func ReadWord(buffer IBuffer) TokenParam {
-	var position = buffer.GetPosition()
+	var startPosition = buffer.GetPosition()
+
 	for IsKeyWordSymbol(buffer.GetSymbol()) && !buffer.GetIsEnd() {
-		position = buffer.GetPosition()
 		buffer.AddSymbol()
 		buffer.Next()
 	}
 
 	return TokenParam{
-		Value:    buffer.GetValue(),
-		Position: position,
+		Value:         buffer.GetValue(),
+		StartPosition: startPosition,
+		EndPosition:   buffer.GetPosition() - 1,
 	}
 }

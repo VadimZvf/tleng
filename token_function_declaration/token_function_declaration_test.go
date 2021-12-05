@@ -1,6 +1,7 @@
 package token_function_declaration
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/VadimZvf/golang/parser_error"
@@ -14,17 +15,9 @@ func TestFunctionNotFound(t *testing.T) {
 	src.FullText = `func wow() {}
 						wowdsa()
 					`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var token = token.Token{}
-	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		token, isFound, _ = FunctionDeclorationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	token, isFound, _ := FunctionDeclorationProcessor(&buffer)
 
 	if isFound != false {
 		t.Errorf("Should't find token")
@@ -38,34 +31,27 @@ func TestFunctionNotFound(t *testing.T) {
 func TestFunctionWithoutArguments(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `function wow() {}`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var foundToken = token.Token{}
-	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound, _ = FunctionDeclorationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	foundToken, isFound, _ := FunctionDeclorationProcessor(&buffer)
 
 	if isFound == false {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Code != "FUNCTION_DECLARATION" {
+	if foundToken.Code != FUNCTION_DECLARATION {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 7 {
+	if foundToken.StartPosition != 0 || foundToken.EndPosition != 13 {
 		t.Errorf("Should save token position")
 	}
 
 	var nameParam = token.TokenParam{
-		Name:     "NAME",
-		Value:    "wow",
-		Position: 11,
+		Name:          FUNCTION_NAME_PARAM,
+		Value:         "wow",
+		StartPosition: 9,
+		EndPosition:   11,
 	}
 
 	if !containParam(foundToken.Params, nameParam) {
@@ -76,34 +62,27 @@ func TestFunctionWithoutArguments(t *testing.T) {
 func TestIgnoreSpaces(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `function      foo    (     ) {}`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var foundToken = token.Token{}
-	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound, _ = FunctionDeclorationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	foundToken, isFound, _ := FunctionDeclorationProcessor(&buffer)
 
 	if isFound == false {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Code != "FUNCTION_DECLARATION" {
+	if foundToken.Code != FUNCTION_DECLARATION {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 7 {
-		t.Errorf("Should save token position")
+	if foundToken.StartPosition != 0 || foundToken.EndPosition != 27 {
+		t.Errorf("Should save token position. Received start: %d end: %d", foundToken.StartPosition, foundToken.EndPosition)
 	}
 
 	var nameParam = token.TokenParam{
-		Name:     "NAME",
-		Value:    "foo",
-		Position: 16,
+		Name:          FUNCTION_NAME_PARAM,
+		Value:         "foo",
+		StartPosition: 14,
+		EndPosition:   16,
 	}
 
 	if !containParam(foundToken.Params, nameParam) {
@@ -114,34 +93,27 @@ func TestIgnoreSpaces(t *testing.T) {
 func TestParseSingleArgument(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `function      bar(baz) {}`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var foundToken = token.Token{}
-	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound, _ = FunctionDeclorationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	foundToken, isFound, _ := FunctionDeclorationProcessor(&buffer)
 
 	if isFound == false {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Code != "FUNCTION_DECLARATION" {
+	if foundToken.Code != FUNCTION_DECLARATION {
 		t.Errorf("Token should be found")
 	}
 
-	if foundToken.Position != 7 {
-		t.Errorf("Should save token position")
+	if foundToken.StartPosition != 0 || foundToken.EndPosition != 21 {
+		t.Errorf("Should save token position. Received start: %d end: %d", foundToken.StartPosition, foundToken.EndPosition)
 	}
 
 	var nameParam = token.TokenParam{
-		Name:     "NAME",
-		Value:    "bar",
-		Position: 16,
+		Name:          FUNCTION_NAME_PARAM,
+		Value:         "bar",
+		StartPosition: 14,
+		EndPosition:   16,
 	}
 
 	if !containParam(foundToken.Params, nameParam) {
@@ -149,9 +121,10 @@ func TestParseSingleArgument(t *testing.T) {
 	}
 
 	var argumentParam = token.TokenParam{
-		Name:     "ARGUMENT",
-		Value:    "baz",
-		Position: 20,
+		Name:          FUNCTION_ARGUMENT_PARAM,
+		Value:         "baz",
+		StartPosition: 18,
+		EndPosition:   20,
 	}
 
 	if !containParam(foundToken.Params, argumentParam) {
@@ -162,22 +135,15 @@ func TestParseSingleArgument(t *testing.T) {
 func TestParseManyArgument(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `function      bar( baz,  foo,     gaz) {}`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var foundToken = token.Token{}
-	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound, _ = FunctionDeclorationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	foundToken, _, _ := FunctionDeclorationProcessor(&buffer)
 
 	var argumentParam = token.TokenParam{
-		Name:     "ARGUMENT",
-		Value:    "baz",
-		Position: 21,
+		Name:          FUNCTION_ARGUMENT_PARAM,
+		Value:         "baz",
+		StartPosition: 19,
+		EndPosition:   21,
 	}
 
 	if !containParam(foundToken.Params, argumentParam) {
@@ -185,9 +151,10 @@ func TestParseManyArgument(t *testing.T) {
 	}
 
 	var argument2Param = token.TokenParam{
-		Name:     "ARGUMENT",
-		Value:    "foo",
-		Position: 27,
+		Name:          FUNCTION_ARGUMENT_PARAM,
+		Value:         "foo",
+		StartPosition: 25,
+		EndPosition:   27,
 	}
 
 	if !containParam(foundToken.Params, argument2Param) {
@@ -195,9 +162,10 @@ func TestParseManyArgument(t *testing.T) {
 	}
 
 	var argument3Param = token.TokenParam{
-		Name:     "ARGUMENT",
-		Value:    "gaz",
-		Position: 36,
+		Name:          FUNCTION_ARGUMENT_PARAM,
+		Value:         "gaz",
+		StartPosition: 34,
+		EndPosition:   36,
 	}
 
 	if !containParam(foundToken.Params, argument3Param) {
@@ -208,17 +176,10 @@ func TestParseManyArgument(t *testing.T) {
 func TestErrorNameParsing(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `function ( baz,  foo,     gaz) {}`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var isFound = false
 	var err = error(nil)
 
-	for !buffer.GetIsEnd() && !isFound && err == nil {
-		_, isFound, err = FunctionDeclorationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	_, _, err = FunctionDeclorationProcessor(&buffer)
 
 	if err == nil {
 		t.Errorf("Should return error")
@@ -234,25 +195,18 @@ func TestErrorNameParsing(t *testing.T) {
 		t.Errorf("Should return function name parsing error")
 	}
 
-	if re.Position != 0 || re.Length != 8 {
-		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	if re.StartPosition != 0 || re.EndPosition != 9 {
+		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.StartPosition, re.EndPosition)
 	}
 }
 
 func TestErrorDeclorationParsing(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `function foo baz,  foo,     gaz) {}`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var isFound = false
 	var err = error(nil)
 
-	for !buffer.GetIsEnd() && !isFound && err == nil {
-		_, isFound, err = FunctionDeclorationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	_, _, err = FunctionDeclorationProcessor(&buffer)
 
 	if err == nil {
 		t.Errorf("Should return error")
@@ -268,25 +222,18 @@ func TestErrorDeclorationParsing(t *testing.T) {
 		t.Errorf("Should return function parsing error. Recived: \"%s\"", re.Message)
 	}
 
-	if re.Position != 0 || re.Length != 13 {
-		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	if re.StartPosition != 0 || re.EndPosition != 13 {
+		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.StartPosition, re.EndPosition)
 	}
 }
 
 func TestErrorSecondBracketParsing(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `function foo (gaz {}`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var isFound = false
 	var err = error(nil)
 
-	for !buffer.GetIsEnd() && !isFound && err == nil {
-		_, isFound, err = FunctionDeclorationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	_, _, err = FunctionDeclorationProcessor(&buffer)
 
 	if err == nil {
 		t.Errorf("Should return error")
@@ -302,25 +249,18 @@ func TestErrorSecondBracketParsing(t *testing.T) {
 		t.Errorf("Should return function parsing error. Recived: \"%s\"", re.Message)
 	}
 
-	if re.Position != 0 || re.Length != 18 {
-		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	if re.StartPosition != 0 || re.EndPosition != 18 {
+		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.StartPosition, re.EndPosition)
 	}
 }
 
 func TestErrorArgumentsParsing(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `function foo (  , a) {}`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var isFound = false
 	var err = error(nil)
 
-	for !buffer.GetIsEnd() && !isFound && err == nil {
-		_, isFound, err = FunctionDeclorationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	_, _, err = FunctionDeclorationProcessor(&buffer)
 
 	if err == nil {
 		t.Errorf("Should return error")
@@ -336,16 +276,39 @@ func TestErrorArgumentsParsing(t *testing.T) {
 		t.Errorf("Should return function parsing error. Recived: \"%s\"", re.Message)
 	}
 
-	if re.Position != 0 || re.Length != 16 {
-		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	if re.StartPosition != 0 || re.EndPosition != 16 {
+		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.StartPosition, re.EndPosition)
 	}
 }
 
 func containParam(params []token.TokenParam, target token.TokenParam) bool {
 	for _, param := range params {
-		if param.Name == target.Name && param.Value == target.Value && param.Position == target.Position {
+		if isSameParams(param, target) {
 			return true
 		}
 	}
+
+	fmt.Println("Params:", params)
+	fmt.Println("Target:", target)
 	return false
+}
+
+func isSameParams(param token.TokenParam, target token.TokenParam) bool {
+	if param.Name != target.Name {
+		return false
+	}
+
+	if param.Value != target.Value {
+		return false
+	}
+
+	if param.StartPosition != target.StartPosition {
+		return false
+	}
+
+	if param.EndPosition != target.EndPosition {
+		return false
+	}
+
+	return true
 }

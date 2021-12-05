@@ -13,25 +13,21 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		return token.Token{}, false, nil
 	}
 
-	if len(buffer.GetValue()) == 0 {
-		return token.Token{}, false, parser_error.ParserError{
-			Message:  "Syntax error, unexpected dot",
-			Position: buffer.GetPosition(),
-			Length:   1,
-		}
-	}
+	var startPosition = buffer.GetPosition()
+	buffer.Next()
 
-	if !token.IsKeyWordSymbol(buffer.PeekForward()) {
+	if !token.IsKeyWordSymbol(buffer.GetSymbol()) {
 		return token.Token{}, false, parser_error.ParserError{
-			Message:  "Syntax error, invalid object property name",
-			Position: buffer.GetPosition(),
-			Length:   1,
+			Message:       "Syntax error, invalid object property name",
+			StartPosition: startPosition,
+			EndPosition:   buffer.GetPosition(),
 		}
 	}
 
 	return token.Token{
-		Code:       READ_PROPERTY,
-		Position:   buffer.GetPosition(),
-		DebugValue: ".",
+		Code:          READ_PROPERTY,
+		StartPosition: startPosition,
+		EndPosition:   startPosition,
+		DebugValue:    ".",
 	}, true, nil
 }

@@ -17,12 +17,7 @@ func TestNumberNotFound(t *testing.T) {
 	var token = token.Token{}
 	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		token, isFound, _ = NumberProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	token, isFound, _ = NumberProcessor(&buffer)
 
 	if isFound != false {
 		t.Errorf("Token should'nt be found")
@@ -41,12 +36,7 @@ func TestNumber(t *testing.T) {
 	var token = token.Token{}
 	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		token, isFound, _ = NumberProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	token, isFound, _ = NumberProcessor(&buffer)
 
 	if isFound == false {
 		t.Errorf("Token should be found")
@@ -56,7 +46,7 @@ func TestNumber(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if token.Position != 4 {
+	if token.StartPosition != 0 || token.EndPosition != 4 {
 		t.Errorf("Should save token position")
 	}
 }
@@ -66,15 +56,9 @@ func TestErrorParsing(t *testing.T) {
 	src.FullText = `231wow`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var isFound = false
 	var err = error(nil)
 
-	for !buffer.GetIsEnd() && !isFound && err == nil {
-		_, isFound, err = NumberProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	_, _, err = NumberProcessor(&buffer)
 
 	if err == nil {
 		t.Errorf("Should return error")
@@ -90,7 +74,7 @@ func TestErrorParsing(t *testing.T) {
 		t.Errorf("Should return syntax error. Recived: \"%s\"", re.Message)
 	}
 
-	if re.Position != 0 || re.Length != 3 {
-		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	if re.StartPosition != 0 || re.EndPosition != 3 {
+		t.Errorf("Should return position of error. Recived start: %d, end: %d", re.StartPosition, re.EndPosition)
 	}
 }

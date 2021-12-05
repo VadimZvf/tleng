@@ -32,7 +32,7 @@ func TestReadProperty(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if token.Position != 3 {
+	if token.StartPosition != 3 || token.EndPosition != 3 {
 		t.Errorf("Should save token position")
 	}
 }
@@ -60,42 +60,8 @@ func TestReadPropertyWithUnderscore(t *testing.T) {
 		t.Errorf("Token should be found")
 	}
 
-	if token.Position != 3 {
+	if token.StartPosition != 3 {
 		t.Errorf("Should save token position")
-	}
-}
-
-func TestErrorParsing(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `.wow`
-
-	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var isFound = false
-	var err = error(nil)
-
-	for !buffer.GetIsEnd() && !isFound && err == nil {
-		_, isFound, err = ReadPropertyProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
-
-	if err == nil {
-		t.Errorf("Should return error")
-	}
-
-	re, ok := err.(parser_error.ParserError)
-
-	if !ok {
-		t.Errorf("Should return parser error")
-	}
-
-	if re.Message != "Syntax error, unexpected dot" {
-		t.Errorf("Should return syntax error. Recived: \"%s\"", re.Message)
-	}
-
-	if re.Position != 0 || re.Length != 1 {
-		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
 	}
 }
 
@@ -128,7 +94,7 @@ func TestErrorInvalidPropertyName(t *testing.T) {
 		t.Errorf("Should return syntax error. Recived: \"%s\"", re.Message)
 	}
 
-	if re.Position != 3 || re.Length != 1 {
-		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	if re.StartPosition != 3 || re.EndPosition != 4 {
+		t.Errorf("Should return position of error. Recived start: %d, end: %d", re.StartPosition, re.EndPosition)
 	}
 }

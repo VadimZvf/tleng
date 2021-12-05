@@ -25,13 +25,13 @@ func PrintError(buffer iBuffer, std iStdout, err error) {
 	var i = 0
 	var code = buffer.GetReadedCode()
 
-	for ; i < re.Position; i++ {
+	for ; i < re.StartPosition; i++ {
 		std.PrintSymbol(string(code[i]))
 	}
 
 	// Print error parth
 	std.SetErrorColor()
-	for ; i < re.Position+re.Length; i++ {
+	for ; i <= re.EndPosition; i++ {
 		std.PrintSymbol(string(code[i]))
 	}
 	std.SetDefaultColor()

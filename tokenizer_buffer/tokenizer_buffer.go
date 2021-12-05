@@ -1,39 +1,44 @@
 package tokenizer_buffer
 
+import (
+	"strings"
+)
+
 type iSource interface {
 	NextSymbol() (symbol rune, isEnd bool)
 }
 
 type Buffer struct {
-	code     string
-	value    string
-	symbol   rune
-	source   iSource
-	isEnd    bool
-	position int
+	value string // Current saved value, with trims, skips
 
-	spiedSymbol rune
-	isSpiedEnd  bool
+	loadedValue      string // Current loaded value from source
+	positionInBuffer int    // Index position in loaded value
+	code             string // Full text of code
+	position         int    // Current index position in code
+	isEnd            bool
+
+	// Inner props
+	source iSource
 }
 
 func (buffer *Buffer) GetValue() string {
 	return buffer.value
 }
 
-func (buffer *Buffer) GetFullValue() string {
-	return buffer.value + string(buffer.symbol)
-}
-
 func (buffer *Buffer) GetSymbol() rune {
-	return buffer.symbol
+	if buffer.positionInBuffer >= len(buffer.loadedValue) {
+		return rune(0)
+	}
+
+	return rune(buffer.loadedValue[buffer.positionInBuffer])
 }
 
 func (buffer *Buffer) GetPosition() int {
-	return buffer.position
+	return buffer.position + buffer.positionInBuffer
 }
 
 func (buffer *Buffer) GetIsEnd() bool {
-	return buffer.isEnd
+	return buffer.positionInBuffer == len(buffer.loadedValue) && buffer.isEnd
 }
 
 func (buffer *Buffer) GetReadedCode() string {
@@ -41,65 +46,84 @@ func (buffer *Buffer) GetReadedCode() string {
 }
 
 func (buffer *Buffer) Next() {
-	buffer.position = buffer.position + 1
-
-	if buffer.spiedSymbol != rune(0) {
-		buffer.symbol = buffer.spiedSymbol
-		buffer.isEnd = buffer.isSpiedEnd
-		buffer.code = buffer.code + string(buffer.symbol)
-		buffer.spiedSymbol = rune(0)
+	if buffer.GetIsEnd() {
 		return
 	}
 
-	symbol, isEnd := buffer.source.NextSymbol()
+	buffer.positionInBuffer = buffer.positionInBuffer + 1
 
-	buffer.code = buffer.code + string(symbol)
-	buffer.symbol = symbol
-	buffer.isEnd = isEnd
-
-	if isEnd {
-		buffer.symbol = rune(0)
+	if buffer.positionInBuffer >= len(buffer.loadedValue) {
+		buffer.loadSymbol()
 	}
+}
+
+func (buffer *Buffer) Reset() {
+	buffer.positionInBuffer = 0
 }
 
 func (buffer *Buffer) TrimNext() {
-	for (buffer.GetSymbol() == ' ' || buffer.GetSymbol() == '\t') && !buffer.GetIsEnd() {
+	for (buffer.GetSymbol() == ' ' || buffer.GetSymbol() == '\n' || buffer.GetSymbol() == '\t') && !buffer.GetIsEnd() {
 		buffer.Next()
 	}
+
+	buffer.Eat(buffer.positionInBuffer)
 }
 
 func (buffer *Buffer) AddSymbol() {
-	buffer.value = buffer.value + string(buffer.symbol)
+	buffer.value = buffer.value + string(buffer.GetSymbol())
+}
+
+func (buffer *Buffer) IsStartsWith(tokenValue string) bool {
+	for len(buffer.loadedValue) < len(tokenValue) && !buffer.isEnd {
+		buffer.loadSymbol()
+	}
+
+	return strings.HasPrefix(buffer.loadedValue, tokenValue)
+}
+
+func (buffer *Buffer) Eat(length int) {
+	buffer.loadedValue = buffer.loadedValue[length:]
+	buffer.position = buffer.position + length
+	buffer.positionInBuffer = 0
 }
 
 func (buffer *Buffer) Clear() {
+	buffer.position = buffer.position + buffer.positionInBuffer
+	buffer.loadedValue = buffer.loadedValue[buffer.positionInBuffer:]
+	buffer.positionInBuffer = 0
 	buffer.value = ""
+
+	if len(buffer.loadedValue) == 0 {
+		buffer.loadSymbol()
+	}
 }
 
-func (buffer *Buffer) PeekForward() rune {
-	if buffer.spiedSymbol != rune(0) || buffer.isEnd || buffer.isSpiedEnd {
-		return buffer.spiedSymbol
+func (buffer *Buffer) loadSymbol() {
+	symbol, isEnd := buffer.source.NextSymbol()
+
+	buffer.isEnd = isEnd
+
+	if isEnd {
+		return
 	}
 
-	symbol, isEnd := buffer.source.NextSymbol()
-	buffer.isSpiedEnd = isEnd
-	buffer.spiedSymbol = symbol
-
-	return buffer.spiedSymbol
+	buffer.code = buffer.code + string(symbol)
+	buffer.loadedValue = buffer.loadedValue + string(symbol)
 }
 
 func CreateBuffer(source iSource) Buffer {
 	symbol, isEnd := source.NextSymbol()
 
 	return Buffer{
-		code:     string(symbol),
-		value:    "",
-		symbol:   symbol,
-		source:   source,
-		isEnd:    isEnd,
-		position: 0,
+		value: "",
 
-		spiedSymbol: rune(0),
-		isSpiedEnd:  isEnd,
+		loadedValue:      string(symbol),
+		positionInBuffer: 0,
+		code:             string(symbol),
+		position:         0,
+		isEnd:            isEnd,
+
+		// Inner props
+		source: source,
 	}
 }

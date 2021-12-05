@@ -1,6 +1,7 @@
-package token_variable_decloration
+package token_variable_declaration
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/VadimZvf/golang/parser_error"
@@ -12,17 +13,9 @@ import (
 func TestVariableShouldNotBeFound(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `cons t = "";`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var token = token.Token{}
-	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		token, isFound, _ = VariableDeclarationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	token, isFound, _ := VariableDeclarationProcessor(&buffer)
 
 	if isFound {
 		t.Errorf("Should't find token")
@@ -36,17 +29,9 @@ func TestVariableShouldNotBeFound(t *testing.T) {
 func TestEmptyVariableDecloration(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `const a;`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var foundToken = token.Token{}
-	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound, _ = VariableDeclarationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	foundToken, isFound, _ := VariableDeclarationProcessor(&buffer)
 
 	if !isFound {
 		t.Errorf("Should find token")
@@ -56,13 +41,14 @@ func TestEmptyVariableDecloration(t *testing.T) {
 		t.Errorf("Should find token")
 	}
 
-	var argument3Param = token.TokenParam{
-		Name:     "NAME",
-		Value:    "a",
-		Position: 6,
+	var variableNameParam = token.TokenParam{
+		Name:          "NAME",
+		Value:         "a",
+		StartPosition: 6,
+		EndPosition:   6,
 	}
 
-	if !containParam(foundToken.Params, argument3Param) {
+	if !containParam(foundToken.Params, variableNameParam) {
 		t.Errorf("Should save name")
 	}
 }
@@ -70,17 +56,9 @@ func TestEmptyVariableDecloration(t *testing.T) {
 func TestLongNameVariableDecloration(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `const wow_foo_bar;`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var foundToken = token.Token{}
-	var isFound = false
 
-	for !buffer.GetIsEnd() && !isFound {
-		foundToken, isFound, _ = VariableDeclarationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	foundToken, isFound, _ := VariableDeclarationProcessor(&buffer)
 
 	if !isFound {
 		t.Errorf("Should find token")
@@ -91,9 +69,10 @@ func TestLongNameVariableDecloration(t *testing.T) {
 	}
 
 	var argument3Param = token.TokenParam{
-		Name:     "NAME",
-		Value:    "wow_foo_bar",
-		Position: 16,
+		Name:          "NAME",
+		Value:         "wow_foo_bar",
+		StartPosition: 6,
+		EndPosition:   16,
 	}
 
 	if !containParam(foundToken.Params, argument3Param) {
@@ -104,17 +83,9 @@ func TestLongNameVariableDecloration(t *testing.T) {
 func TestErrorInvalidName(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `const 123foo`
-
 	var buffer = tokenizer_buffer.CreateBuffer(src)
-	var isFound = false
-	var err = error(nil)
 
-	for !buffer.GetIsEnd() && !isFound && err == nil {
-		_, isFound, err = VariableDeclarationProcessor(&buffer)
-		buffer.TrimNext()
-		buffer.AddSymbol()
-		buffer.Next()
-	}
+	_, _, err := VariableDeclarationProcessor(&buffer)
 
 	if err == nil {
 		t.Errorf("Should return error")
@@ -130,16 +101,32 @@ func TestErrorInvalidName(t *testing.T) {
 		t.Errorf("Should return variable name parsing error")
 	}
 
-	if re.Position != 0 || re.Length != 7 {
-		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	if re.StartPosition != 0 || re.EndPosition != 6 {
+		t.Errorf("Should return position of error. Recived start: %d, end: %d", re.StartPosition, re.EndPosition)
 	}
 }
 
 func containParam(params []token.TokenParam, target token.TokenParam) bool {
 	for _, param := range params {
-		if param.Name == target.Name && param.Value == target.Value && param.Position == target.Position {
-			return true
+		if param.Name != target.Name {
+			fmt.Printf("Invalid property name. Expected: %s Received: %s\n", target.Name, param.Name)
+			return false
+		}
+
+		if param.Value != target.Value {
+			fmt.Printf("Invalid property value. Expected: %s Received: %s\n", target.Value, param.Value)
+			return false
+		}
+
+		if param.StartPosition != target.StartPosition {
+			fmt.Printf("Invalid property StartPosition. Expected: %d Received: %d\n", target.StartPosition, param.StartPosition)
+			return false
+		}
+
+		if param.EndPosition != target.EndPosition {
+			fmt.Printf("Invalid property EndPosition. Expected: %d Received: %d\n", target.EndPosition, param.EndPosition)
+			return false
 		}
 	}
-	return false
+	return true
 }

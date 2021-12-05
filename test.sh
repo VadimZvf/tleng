@@ -30,7 +30,7 @@ echo ""
 
 echo "Variable declaration token"
 echo "======================"
-cd token_variable_decloration
+cd token_variable_declaration
 go test
 cd ..
 echo ""

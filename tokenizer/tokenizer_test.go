@@ -1,6 +1,7 @@
 package tokenizer
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/VadimZvf/golang/parser_error"
@@ -9,7 +10,7 @@ import (
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_return"
 	"github.com/VadimZvf/golang/token_string"
-	"github.com/VadimZvf/golang/token_variable_decloration"
+	"github.com/VadimZvf/golang/token_variable_declaration"
 	"github.com/VadimZvf/golang/tokenizer_buffer"
 )
 
@@ -23,32 +24,39 @@ func TestStringVariable(t *testing.T) {
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
 
-	compareTokens(t, tokens[0], token.Token{
-		Code:     token.NEW_LINE,
-		Position: 0,
-	})
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token_variable_declaration.VARIABLE_DECLARAION,
+		StartPosition: 3,
+		EndPosition:   9,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[1], token.Token{
-		Code:     token_variable_decloration.VARIABLE_DECLARAION,
-		Position: 7,
-	})
+	if !checkParam(tokens[0], token.TokenParam{
+		Name:          token_variable_declaration.VARIABLE_NAME_PARAM,
+		Value:         "a",
+		StartPosition: 9,
+		EndPosition:   9,
+	}) {
+		t.Errorf("Wrong param")
+	}
 
-	checkParam(t, tokens[1], token.TokenParam{
-		Name:     token_variable_decloration.VARIABLE_NAME_PARAM,
-		Value:    "a",
-		Position: 9,
-	})
+	if !isSameToken(tokens[1], token.Token{
+		Code:          token.ASSIGNMENT,
+		StartPosition: 11,
+		EndPosition:   11,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[2], token.Token{
-		Code:     token.ASSIGNMENT,
-		Position: 11,
-	})
-
-	compareTokens(t, tokens[3], token.Token{
-		Code:     token_string.STRING,
-		Position: 25,
-		Value:    "Hello world",
-	})
+	if !isSameToken(tokens[2], token.Token{
+		Code:          token_string.STRING,
+		Value:         "Hello world",
+		StartPosition: 13,
+		EndPosition:   25,
+	}) {
+		t.Errorf("Wrong token")
+	}
 }
 
 func TestKeywordLikeVariableDecloration(t *testing.T) {
@@ -59,11 +67,14 @@ func TestKeywordLikeVariableDecloration(t *testing.T) {
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
 
-	compareTokens(t, tokens[0], token.Token{
-		Code:     token.KEY_WORD,
-		Value:    "constA",
-		Position: 5,
-	})
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token.KEY_WORD,
+		Value:         "constA",
+		StartPosition: 0,
+		EndPosition:   5,
+	}) {
+		t.Errorf("Wrong token")
+	}
 }
 
 func TestKeywordLikeFunctionDecloration(t *testing.T) {
@@ -74,21 +85,30 @@ func TestKeywordLikeFunctionDecloration(t *testing.T) {
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
 
-	compareTokens(t, tokens[0], token.Token{
-		Code:     token.KEY_WORD,
-		Value:    "functionA",
-		Position: 8,
-	})
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token.KEY_WORD,
+		Value:         "functionA",
+		StartPosition: 0,
+		EndPosition:   8,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[1], token.Token{
-		Code:     token.OPEN_EXPRESSION,
-		Position: 9,
-	})
+	if !isSameToken(tokens[1], token.Token{
+		Code:          token.OPEN_EXPRESSION,
+		StartPosition: 9,
+		EndPosition:   9,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[2], token.Token{
-		Code:     token.CLOSE_EXPRESSION,
-		Position: 10,
-	})
+	if !isSameToken(tokens[2], token.Token{
+		Code:          token.CLOSE_EXPRESSION,
+		StartPosition: 10,
+		EndPosition:   10,
+	}) {
+		t.Errorf("Wrong token")
+	}
 }
 
 func TestCopyVariableByLink(t *testing.T) {
@@ -99,27 +119,39 @@ func TestCopyVariableByLink(t *testing.T) {
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
 
-	compareTokens(t, tokens[0], token.Token{
-		Code:     token_variable_decloration.VARIABLE_DECLARAION,
-		Position: 4,
-	})
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token_variable_declaration.VARIABLE_DECLARAION,
+		StartPosition: 0,
+		EndPosition:   6,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	checkParam(t, tokens[0], token.TokenParam{
-		Name:     token_variable_decloration.VARIABLE_NAME_PARAM,
-		Value:    "a",
-		Position: 6,
-	})
+	if !checkParam(tokens[0], token.TokenParam{
+		Name:          token_variable_declaration.VARIABLE_NAME_PARAM,
+		Value:         "a",
+		StartPosition: 6,
+		EndPosition:   6,
+	}) {
+		t.Errorf("Wrong param")
+	}
 
-	compareTokens(t, tokens[1], token.Token{
-		Code:     token.ASSIGNMENT,
-		Position: 8,
-	})
+	if !isSameToken(tokens[1], token.Token{
+		Code:          token.ASSIGNMENT,
+		StartPosition: 8,
+		EndPosition:   8,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[2], token.Token{
-		Code:     token.KEY_WORD,
-		Position: 10,
-		Value:    "b",
-	})
+	if !isSameToken(tokens[2], token.Token{
+		Code:          token.KEY_WORD,
+		Value:         "b",
+		StartPosition: 10,
+		EndPosition:   10,
+	}) {
+		t.Errorf("Wrong token")
+	}
 }
 
 func TestVariableWithTokenName(t *testing.T) {
@@ -130,16 +162,22 @@ func TestVariableWithTokenName(t *testing.T) {
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
 
-	compareTokens(t, tokens[0], token.Token{
-		Code:     token_variable_decloration.VARIABLE_DECLARAION,
-		Position: 4,
-	})
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token_variable_declaration.VARIABLE_DECLARAION,
+		StartPosition: 0,
+		EndPosition:   14,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	checkParam(t, tokens[0], token.TokenParam{
-		Name:     token_variable_decloration.VARIABLE_NAME_PARAM,
-		Value:    "functionA",
-		Position: 14,
-	})
+	if !checkParam(tokens[0], token.TokenParam{
+		Name:          token_variable_declaration.VARIABLE_NAME_PARAM,
+		Value:         "functionA",
+		StartPosition: 6,
+		EndPosition:   14,
+	}) {
+		t.Errorf("Wrong param")
+	}
 }
 
 func TestFunctionDecloration(t *testing.T) {
@@ -150,26 +188,38 @@ func TestFunctionDecloration(t *testing.T) {
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
 
-	compareTokens(t, tokens[0], token.Token{
-		Code:     token_function_declaration.FUNCTION_DECLARATION,
-		Position: 7,
-	})
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token_function_declaration.FUNCTION_DECLARATION,
+		StartPosition: 0,
+		EndPosition:   13,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	checkParam(t, tokens[0], token.TokenParam{
-		Name:     token_function_declaration.FUNCTION_NAME_PARAM,
-		Value:    "foo",
-		Position: 11,
-	})
+	if !checkParam(tokens[0], token.TokenParam{
+		Name:          token_function_declaration.FUNCTION_NAME_PARAM,
+		Value:         "foo",
+		StartPosition: 9,
+		EndPosition:   11,
+	}) {
+		t.Errorf("Wrong param")
+	}
 
-	compareTokens(t, tokens[1], token.Token{
-		Code:     token.OPEN_BLOCK,
-		Position: 15,
-	})
+	if !isSameToken(tokens[1], token.Token{
+		Code:          token.OPEN_BLOCK,
+		StartPosition: 15,
+		EndPosition:   15,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[2], token.Token{
-		Code:     token.CLOSE_BLOCK,
-		Position: 16,
-	})
+	if !isSameToken(tokens[2], token.Token{
+		Code:          token.CLOSE_BLOCK,
+		StartPosition: 16,
+		EndPosition:   16,
+	}) {
+		t.Errorf("Wrong token")
+	}
 }
 
 func TestFunctionDeclorationWithArguments(t *testing.T) {
@@ -180,38 +230,56 @@ func TestFunctionDeclorationWithArguments(t *testing.T) {
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
 
-	compareTokens(t, tokens[0], token.Token{
-		Code:     token_function_declaration.FUNCTION_DECLARATION,
-		Position: 7,
-	})
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token_function_declaration.FUNCTION_DECLARATION,
+		StartPosition: 0,
+		EndPosition:   17,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	checkParam(t, tokens[0], token.TokenParam{
-		Name:     token_function_declaration.FUNCTION_NAME_PARAM,
-		Value:    "foo",
-		Position: 11,
-	})
+	if !checkParam(tokens[0], token.TokenParam{
+		Name:          token_function_declaration.FUNCTION_NAME_PARAM,
+		Value:         "foo",
+		StartPosition: 9,
+		EndPosition:   11,
+	}) {
+		t.Errorf("Wrong param")
+	}
 
-	checkParam(t, tokens[0], token.TokenParam{
-		Name:     token_function_declaration.FUNCTION_ARGUMENT_PARAM,
-		Value:    "a",
-		Position: 13,
-	})
+	if !checkParam(tokens[0], token.TokenParam{
+		Name:          token_function_declaration.FUNCTION_ARGUMENT_PARAM,
+		Value:         "a",
+		StartPosition: 13,
+		EndPosition:   13,
+	}) {
+		t.Errorf("Wrong param")
+	}
 
-	checkParam(t, tokens[0], token.TokenParam{
-		Name:     token_function_declaration.FUNCTION_ARGUMENT_PARAM,
-		Value:    "b",
-		Position: 16,
-	})
+	if !checkParam(tokens[0], token.TokenParam{
+		Name:          token_function_declaration.FUNCTION_ARGUMENT_PARAM,
+		Value:         "b",
+		StartPosition: 16,
+		EndPosition:   16,
+	}) {
+		t.Errorf("Wrong param")
+	}
 
-	compareTokens(t, tokens[1], token.Token{
-		Code:     token.OPEN_BLOCK,
-		Position: 19,
-	})
+	if !isSameToken(tokens[1], token.Token{
+		Code:          token.OPEN_BLOCK,
+		StartPosition: 19,
+		EndPosition:   19,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[2], token.Token{
-		Code:     token.CLOSE_BLOCK,
-		Position: 20,
-	})
+	if !isSameToken(tokens[2], token.Token{
+		Code:          token.CLOSE_BLOCK,
+		StartPosition: 20,
+		EndPosition:   20,
+	}) {
+		t.Errorf("Wrong token")
+	}
 }
 
 func TestFunctionWithReturnStatement(t *testing.T) {
@@ -226,52 +294,55 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
 
-	compareTokens(t, tokens[0], token.Token{
-		Code:     token.NEW_LINE,
-		Position: 0,
-	})
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token_function_declaration.FUNCTION_DECLARATION,
+		StartPosition: 3,
+		EndPosition:   16,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[1], token.Token{
-		Code:     token_function_declaration.FUNCTION_DECLARATION,
-		Position: 10,
-	})
+	if !checkParam(tokens[0], token.TokenParam{
+		Name:          token_function_declaration.FUNCTION_NAME_PARAM,
+		Value:         "bar",
+		StartPosition: 12,
+		EndPosition:   14,
+	}) {
+		t.Errorf("Wrong param")
+	}
 
-	checkParam(t, tokens[1], token.TokenParam{
-		Name:     token_function_declaration.FUNCTION_NAME_PARAM,
-		Value:    "bar",
-		Position: 14,
-	})
+	if !isSameToken(tokens[1], token.Token{
+		Code:          token.OPEN_BLOCK,
+		StartPosition: 18,
+		EndPosition:   18,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[2], token.Token{
-		Code:     token.OPEN_BLOCK,
-		Position: 18,
-	})
+	if !isSameToken(tokens[2], token.Token{
+		Code:          token_return.RETURN_DECLARATION,
+		StartPosition: 23,
+		EndPosition:   28,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[3], token.Token{
-		Code:     token.NEW_LINE,
-		Position: 19,
-	})
+	if !isSameToken(tokens[3], token.Token{
+		Code:          token_string.STRING,
+		Value:         "Avada kedavra",
+		StartPosition: 30,
+		EndPosition:   44,
+	}) {
+		t.Errorf("Wrong token")
+	}
 
-	compareTokens(t, tokens[4], token.Token{
-		Code:     token_return.RETURN_DECLARATION,
-		Position: 28,
-	})
-
-	compareTokens(t, tokens[5], token.Token{
-		Code:     token_string.STRING,
-		Position: 44,
-		Value:    "Avada kedavra",
-	})
-
-	compareTokens(t, tokens[6], token.Token{
-		Code:     token.NEW_LINE,
-		Position: 45,
-	})
-
-	compareTokens(t, tokens[7], token.Token{
-		Code:     token.CLOSE_BLOCK,
-		Position: 48,
-	})
+	if !isSameToken(tokens[4], token.Token{
+		Code:          token.CLOSE_BLOCK,
+		StartPosition: 48,
+		EndPosition:   48,
+	}) {
+		t.Errorf("Wrong token")
+	}
 }
 
 func TestSyntaxError(t *testing.T) {
@@ -304,39 +375,51 @@ func TestSyntaxError(t *testing.T) {
 		t.Errorf("Should return syntax error message, but receinve: \"%s\"", re.Message)
 	}
 
-	if re.Position != 20 || re.Length != 1 {
-		t.Errorf("Should return position of error. Recived position: %d, length: %d", re.Position, re.Length)
+	if re.StartPosition != 21 || re.EndPosition != 21 {
+		t.Errorf("Should return position of error. Recived start: %d, end: %d", re.StartPosition, re.EndPosition)
 	}
 }
 
 /// Utils
 
-func compareTokens(t *testing.T, first token.Token, second token.Token) {
+func isSameToken(first token.Token, second token.Token) bool {
 	if first.Code != second.Code {
-		t.Errorf("Different token Codes: %s - %s", first.Code, second.Code)
+		fmt.Printf("Different token Codes: %s - %s\n", first.Code, second.Code)
+		return false
 	}
 
 	if first.Value != second.Value {
-		t.Errorf("Different token Values: %s - %s", first.Value, second.Value)
+		fmt.Printf("Different token Values: %s - %s\n", first.Value, second.Value)
+		return false
 	}
 
-	if first.Position != second.Position {
-		t.Errorf("Different token position: %d - %d", first.Position, second.Position)
+	if first.StartPosition != second.StartPosition {
+		fmt.Printf("Different token start position: %d - %d\n", first.StartPosition, second.StartPosition)
+		return false
 	}
+
+	if first.EndPosition != second.EndPosition {
+		fmt.Printf("Different token end position: %d - %d\n", first.EndPosition, second.EndPosition)
+		return false
+	}
+
+	return true
 }
 
-func checkParam(t *testing.T, tokenItem token.Token, targetParam token.TokenParam) {
+func checkParam(tokenItem token.Token, targetParam token.TokenParam) bool {
 	for _, param := range tokenItem.Params {
-		if param.Name == targetParam.Name && param.Value == targetParam.Value && param.Position == targetParam.Position {
-			return
+		if param.Name == targetParam.Name && param.Value == targetParam.Value && param.StartPosition == targetParam.StartPosition && param.EndPosition == targetParam.EndPosition {
+			return true
 		}
 	}
 
-	t.Errorf("Param not found in token")
-	t.Errorf("Looking for param - name: %s, value: %s, position, %d", targetParam.Name, targetParam.Value, targetParam.Position)
-	t.Errorf("Token has params:")
+	fmt.Printf("Param not found in token")
+	fmt.Printf("Looking for param - name: %s, value: %s, position, %d\n", targetParam.Name, targetParam.Value, targetParam.StartPosition)
+	fmt.Printf("Token has params:")
 
 	for _, param := range tokenItem.Params {
-		t.Errorf("name: %s, value: %s, position, %d", param.Name, param.Value, param.Position)
+		fmt.Printf("name: %s, value: %s, position, %d\n", param.Name, param.Value, param.StartPosition)
 	}
+
+	return false
 }
