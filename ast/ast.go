@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"github.com/VadimZvf/golang/ast_token_stream"
 	"github.com/VadimZvf/golang/token"
 	"github.com/VadimZvf/golang/token_keyword"
 	"github.com/VadimZvf/golang/token_number"
@@ -41,9 +42,14 @@ func CreateAST(tokens []token.Token) ASTNode {
 		Code: AST_NODE_CODE_ROOT,
 	}
 
+	var tokenStream = ast_token_stream.CreateTokenStream(tokens)
+	var currentToken, isEnd = tokenStream.Next()
+
 	var current *ASTNode = &root
 
-	for _, currentToken := range tokens {
+	var stack []*ASTNode = *&[]*ASTNode{}
+
+	for !isEnd {
 		switch currentToken.Code {
 		case token_variable_declaration.VARIABLE_DECLARAION:
 			var variableName = currentToken.Params[len(currentToken.Params)-1]
@@ -64,6 +70,33 @@ func CreateAST(tokens []token.Token) ASTNode {
 			current = &variableNode
 
 		case token.ASSIGNMENT:
+			if len(stack) > 0 {
+				var lastStackNode = stack[0]
+
+				if lastStackNode.Code == AST_NODE_CODE_REFERENDE {
+					stack = stack[1:]
+
+
+					var variableName = getVariableNameParam(*lastStackNode)
+					var assignmentNode = ASTNode{
+						Code: AST_NODE_CODE_ASSIGNMENT,
+						Params: []ASTNodeParam{{
+							Name:          AST_PARAM_VARIABLE_NAME,
+							Value:         variableName.Value,
+							StartPosition: variableName.StartPosition,
+							EndPosition:   variableName.EndPosition,
+						}},
+						// Debug data
+						StartPosition: lastStackNode.StartPosition,
+						EndPosition:   lastStackNode.EndPosition,
+					}
+
+					current.Sibling = &assignmentNode
+					current = &assignmentNode
+				}
+				break
+			}
+
 			if current.Code == AST_NODE_CODE_VARIABLE_DECLARATION || current.Code == AST_NODE_CODE_REFERENDE {
 				var variableName = getVariableNameParam(*current)
 				var assignmentNode = ASTNode{
@@ -118,10 +151,11 @@ func CreateAST(tokens []token.Token) ASTNode {
 			if current.Code == AST_NODE_CODE_ASSIGNMENT && current.Child == nil {
 				current.Child = &referenceNode
 			} else {
-				current.Sibling = &referenceNode
-				current = &referenceNode
+				stack = append(stack, &referenceNode)
 			}
 		}
+
+		currentToken, isEnd = tokenStream.Next()
 	}
 
 	return root
