@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/VadimZvf/golang/ast"
+	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/parser_error_printer"
 	"github.com/VadimZvf/golang/source_file"
 	"github.com/VadimZvf/golang/stdout"
@@ -52,29 +53,26 @@ func main() {
 	}
 
 	var astRoot = ast.CreateAST(tokens)
-	var current = &astRoot
-	var stack = []*ast.ASTNode{}
-	var depth = 0
 
-	for current != nil {
-		for i := 0; i < depth; i++ {
-			fmt.Printf("    ")
+	printASTNode(astRoot, 0)
+}
+
+func printASTNode(node *ast_node.ASTNode, depth int) {
+	for i := 0; i < depth; i++ {
+		fmt.Printf("    ")
+	}
+	fmt.Printf("Code: %s ", node.Code)
+	fmt.Println("Params:", node.Params)
+
+	if len(node.Body) > 0 {
+		for _, child := range node.Body {
+			printASTNode(child, depth + 1)
 		}
-		fmt.Printf("Code: %s ", current.Code)
-		fmt.Println("Params:", current.Params)
+	}
 
-		if current.Child != nil {
-			stack = append(stack, current)
-			current = current.Child
-			depth = depth + 1
-		} else if current.Sibling != nil {
-			current = current.Sibling
-		} else if len(stack) > 0 {
-			current = stack[len(stack)-1].Sibling
-			stack = stack[:len(stack)-1]
-			depth = depth - 1
-		} else {
-			return
+	if len(node.Arguments) > 0 {
+		for _, child := range node.Body {
+			printASTNode(child, depth + 1)
 		}
 	}
 }

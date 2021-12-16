@@ -20,7 +20,9 @@ func (stream *TokenStream) Next() (token.Token, bool) {
 		return token.Token{}, true
 	}
 
+	var nextToken = stream.tokens[stream.currentIndex]
+
 	stream.currentIndex = stream.currentIndex + 1
 
-	return stream.tokens[stream.currentIndex], false
+	return nextToken, false
 }

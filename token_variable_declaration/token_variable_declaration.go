@@ -50,3 +50,13 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		Params:        []token.TokenParam{variableName},
 	}, true, nil
 }
+
+func GetVariableNameParam(variableToken token.Token) token.TokenParam {
+	for _, param := range variableToken.Params {
+		if param.Name == VARIABLE_NAME_PARAM {
+			return param
+		}
+	}
+
+	return token.TokenParam{}
+}

@@ -102,3 +102,13 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		Params:        append(arguments, functionName),
 	}, true, nil
 }
+
+func GetFunctionNameParam(functionToken token.Token) token.TokenParam {
+	for _, param := range functionToken.Params {
+		if param.Name == FUNCTION_NAME_PARAM {
+			return param
+		}
+	}
+
+	return token.TokenParam{}
+}
