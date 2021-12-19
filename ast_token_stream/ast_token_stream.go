@@ -2,27 +2,40 @@ package ast_token_stream
 
 import "github.com/VadimZvf/golang/token"
 
-
 type TokenStream struct {
-	tokens []token.Token
+	tokens       []token.Token
 	currentIndex int
 }
 
 func CreateTokenStream(tokens []token.Token) TokenStream {
 	return TokenStream{
-		tokens: tokens,
+		tokens:       tokens,
 		currentIndex: 0,
 	}
 }
 
-func (stream *TokenStream) Next() (token.Token, bool) {
-	if stream.currentIndex + 1 >= len(stream.tokens) {
+func (stream *TokenStream) MoveNext() {
+	stream.currentIndex = stream.currentIndex + 1
+}
+
+func (stream *TokenStream) Look() (token.Token, bool) {
+	if stream.currentIndex >= len(stream.tokens) {
 		return token.Token{}, true
 	}
 
-	var nextToken = stream.tokens[stream.currentIndex]
+	var token = stream.tokens[stream.currentIndex]
 
-	stream.currentIndex = stream.currentIndex + 1
+	return token, false
+}
+
+func (stream *TokenStream) LookNext() (token.Token, bool) {
+	var nextIndex = stream.currentIndex + 1
+
+	if nextIndex >= len(stream.tokens) {
+		return token.Token{}, true
+	}
+
+	var nextToken = stream.tokens[nextIndex]
 
 	return nextToken, false
 }
