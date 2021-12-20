@@ -67,6 +67,9 @@ var CloseExpressionProcessor = createSymbolProcessor(CLOSE_EXPRESSION, ')')
 var ADD = "ADD"
 var AddProcessor = createSymbolProcessor(ADD, '+')
 
+var SUBTRACT = "SUBTRACT"
+var SubtractProcessor = createSymbolProcessor(SUBTRACT, '-')
+
 var END_LINE = "END_LINE"
 var EndLineProcessor = createSymbolProcessor(END_LINE, ';')
 

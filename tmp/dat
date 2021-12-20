@@ -5,7 +5,7 @@ function func(d, c, w) {
 }
 
 const foo = sdas + 2;
-Wow = 123;
+Wow = 123 - 3;
 
 console.log(func(), a);
 
