@@ -64,6 +64,9 @@ var OpenExpressionProcessor = createSymbolProcessor(OPEN_EXPRESSION, '(')
 var CLOSE_EXPRESSION = "CLOSE_EXPRESSION"
 var CloseExpressionProcessor = createSymbolProcessor(CLOSE_EXPRESSION, ')')
 
+var ADD = "ADD"
+var AddProcessor = createSymbolProcessor(ADD, '+')
+
 var END_LINE = "END_LINE"
 var EndLineProcessor = createSymbolProcessor(END_LINE, ';')
 

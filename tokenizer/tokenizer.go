@@ -86,6 +86,7 @@ func getToken(buffer iBuffer) (token.Token, bool, error) {
 		token.CloseBlockProcessor,
 		token.OpenExpressionProcessor,
 		token.CloseExpressionProcessor,
+		token.AddProcessor,
 		token.EndLineProcessor,
 		token.CommaProcessor,
 	}

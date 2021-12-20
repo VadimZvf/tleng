@@ -4,7 +4,7 @@ function func(d, c, w) {
     return "Hello world";
 }
 
-const foo = sdas;
+const foo = sdas + 2;
 Wow = 123;
 
 console.log(func(), a);
