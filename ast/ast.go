@@ -39,6 +39,14 @@ func CreateAST(tokens []token.Token) *ast_node.ASTNode {
 				processKeyWordToken(fakeKeyWordToken, &tokenStream, &factory)
 			}
 
+		case token.ADD:
+			var variableNode = createNode(currentToken)
+			factory.Append(&variableNode)
+
+		case token.SUBTRACT:
+			var variableNode = createNode(currentToken)
+			factory.Append(&variableNode)
+
 		case token_keyword.KEY_WORD:
 			processKeyWordToken(currentToken, &tokenStream, &factory)
 
@@ -76,6 +84,22 @@ func createNode(currentToken token.Token) ast_node.ASTNode {
 	case token.ASSIGNMENT:
 		return ast_node.ASTNode{
 			Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
+			// Debug data
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+
+	case token.ADD:
+		return ast_node.ASTNode{
+			Code: ast_node.AST_NODE_CODE_ADD,
+			// Debug data
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+
+	case token.SUBTRACT:
+		return ast_node.ASTNode{
+			Code: ast_node.AST_NODE_CODE_SUBTRACT,
 			// Debug data
 			StartPosition: currentToken.StartPosition,
 			EndPosition:   currentToken.EndPosition,
