@@ -36,7 +36,8 @@ func CreateAST(tokens []token.Token) *ast_node.ASTNode {
 					EndPosition:   currentToken.EndPosition,
 					Value:         variableNameParam.Value,
 				}
-				processKeyWordToken(fakeKeyWordToken, &tokenStream, &factory)
+				var keyWordNode = processKeyWordToken(fakeKeyWordToken, &tokenStream)
+				factory.Append(&keyWordNode)
 			}
 
 		case token.ADD:
@@ -48,7 +49,8 @@ func CreateAST(tokens []token.Token) *ast_node.ASTNode {
 			factory.Append(&subtractNode)
 
 		case token_keyword.KEY_WORD:
-			processKeyWordToken(currentToken, &tokenStream, &factory)
+			var keyWordNode = processKeyWordToken(currentToken, &tokenStream)
+			factory.Append(&keyWordNode)
 
 		case token_function_declaration.FUNCTION_DECLARATION:
 			processFunctionToken(currentToken, &tokenStream, &factory)
@@ -62,6 +64,10 @@ func CreateAST(tokens []token.Token) *ast_node.ASTNode {
 	}
 
 	return factory.GetAST()
+}
+
+func getNode(currentToken token.Token, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ast_node.ASTNode {
+	return createNode(currentToken)
 }
 
 func createNode(currentToken token.Token) ast_node.ASTNode {
@@ -153,11 +159,11 @@ func createNode(currentToken token.Token) ast_node.ASTNode {
 	}
 }
 
-func processKeyWordToken(currentToken token.Token, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) {
+func processKeyWordToken(currentToken token.Token, stream *ast_token_stream.TokenStream) ast_node.ASTNode {
 	var nextToken, isEnd = stream.LookNext()
 
 	if isEnd {
-		return
+		return ast_node.ASTNode{}
 	}
 
 	switch nextToken.Code {
@@ -174,16 +180,19 @@ func processKeyWordToken(currentToken token.Token, stream *ast_token_stream.Toke
 		var valueToken, isEnd = stream.LookNext()
 
 		if isEnd {
-			return
+			return ast_node.ASTNode{}
 		}
 
 		var valueNode = createNode(valueToken)
 
 		assignmentNode.Body = []*ast_node.ASTNode{&valueNode}
 
-		factory.Append(&assignmentNode)
 		stream.MoveNext()
+
+		return assignmentNode
 	}
+
+	return ast_node.ASTNode{}
 }
 
 func processFunctionToken(currentToken token.Token, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) {
