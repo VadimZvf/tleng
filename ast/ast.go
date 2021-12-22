@@ -53,7 +53,9 @@ func CreateAST(tokens []token.Token) *ast_node.ASTNode {
 			factory.Append(&keyWordNode)
 
 		case token_function_declaration.FUNCTION_DECLARATION:
-			processFunctionToken(currentToken, &tokenStream, &factory)
+			var functionNode = processFunctionToken(currentToken, &tokenStream)
+			factory.Append(&functionNode)
+			factory.MovePointerLastNodeBody()
 
 		case token.CLOSE_BLOCK:
 			factory.MovePointerToParent()
@@ -195,18 +197,20 @@ func processKeyWordToken(currentToken token.Token, stream *ast_token_stream.Toke
 	return ast_node.ASTNode{}
 }
 
-func processFunctionToken(currentToken token.Token, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) {
+func processFunctionToken(currentToken token.Token, stream *ast_token_stream.TokenStream) ast_node.ASTNode {
 	var nextToken, isEnd = stream.LookNext()
 
 	if isEnd {
-		return
+		return ast_node.ASTNode{}
 	}
 
 	switch nextToken.Code {
 	case token.OPEN_BLOCK:
 		var functionNode = createNode(currentToken)
-		factory.Append(&functionNode)
-		factory.MovePointerLastNodeBody()
 		stream.MoveNext()
+
+		return functionNode
 	}
+
+	return ast_node.ASTNode{}
 }
