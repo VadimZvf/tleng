@@ -40,12 +40,12 @@ func CreateAST(tokens []token.Token) *ast_node.ASTNode {
 			}
 
 		case token.ADD:
-			var variableNode = createNode(currentToken)
-			factory.Append(&variableNode)
+			var addNode = createNode(currentToken)
+			factory.Append(&addNode)
 
 		case token.SUBTRACT:
-			var variableNode = createNode(currentToken)
-			factory.Append(&variableNode)
+			var subtractNode = createNode(currentToken)
+			factory.Append(&subtractNode)
 
 		case token_keyword.KEY_WORD:
 			processKeyWordToken(currentToken, &tokenStream, &factory)
