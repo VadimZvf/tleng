@@ -17,49 +17,8 @@ func CreateAST(tokens []token.Token) *ast_node.ASTNode {
 	var factory = ast_factory.CreateASTFactory()
 
 	for !isEnd {
-		switch currentToken.Code {
-		case token_variable_declaration.VARIABLE_DECLARAION:
-			var variableNode = createNode(currentToken)
-			factory.Append(&variableNode)
-
-			var nextToken, isEnd = tokenStream.LookNext()
-
-			if isEnd {
-				break
-			}
-
-			if nextToken.Code == token.ASSIGNMENT {
-				var variableNameParam = token_variable_declaration.GetVariableNameParam(currentToken)
-				var fakeKeyWordToken = token.Token{
-					Code:          token_keyword.KEY_WORD,
-					StartPosition: currentToken.StartPosition,
-					EndPosition:   currentToken.EndPosition,
-					Value:         variableNameParam.Value,
-				}
-				var keyWordNode = processKeyWordToken(fakeKeyWordToken, &tokenStream)
-				factory.Append(&keyWordNode)
-			}
-
-		case token.ADD:
-			var addNode = createNode(currentToken)
-			factory.Append(&addNode)
-
-		case token.SUBTRACT:
-			var subtractNode = createNode(currentToken)
-			factory.Append(&subtractNode)
-
-		case token_keyword.KEY_WORD:
-			var keyWordNode = processKeyWordToken(currentToken, &tokenStream)
-			factory.Append(&keyWordNode)
-
-		case token_function_declaration.FUNCTION_DECLARATION:
-			var functionNode = processFunctionToken(currentToken, &tokenStream)
-			factory.Append(&functionNode)
-			factory.MovePointerLastNodeBody()
-
-		case token.CLOSE_BLOCK:
-			factory.MovePointerToParent()
-		}
+		var node = getNode(currentToken, &tokenStream, &factory)
+		factory.Append(&node)
 
 		tokenStream.MoveNext()
 		currentToken, isEnd = tokenStream.Look()
@@ -69,7 +28,48 @@ func CreateAST(tokens []token.Token) *ast_node.ASTNode {
 }
 
 func getNode(currentToken token.Token, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ast_node.ASTNode {
-	return createNode(currentToken)
+	switch currentToken.Code {
+	case token_variable_declaration.VARIABLE_DECLARAION:
+		var variableNode = createNode(currentToken)
+		factory.Append(&variableNode)
+
+		var nextToken, isEnd = stream.LookNext()
+
+		if isEnd {
+			break
+		}
+
+		if nextToken.Code == token.ASSIGNMENT {
+			var variableNameParam = token_variable_declaration.GetVariableNameParam(currentToken)
+			var fakeKeyWordToken = token.Token{
+				Code:          token_keyword.KEY_WORD,
+				StartPosition: currentToken.StartPosition,
+				EndPosition:   currentToken.EndPosition,
+				Value:         variableNameParam.Value,
+			}
+			var keyWordNode = processKeyWordToken(fakeKeyWordToken, stream)
+			return keyWordNode
+		}
+
+	case token.ADD:
+		return createNode(currentToken)
+
+	case token.SUBTRACT:
+		return createNode(currentToken)
+
+	case token_keyword.KEY_WORD:
+		return processKeyWordToken(currentToken, stream)
+
+	case token_function_declaration.FUNCTION_DECLARATION:
+		var functionNode = processFunctionToken(currentToken, stream)
+		factory.MovePointerLastNodeBody()
+		return functionNode
+
+	case token.CLOSE_BLOCK:
+		factory.MovePointerToParent()
+	}
+
+	return ast_node.ASTNode{}
 }
 
 func createNode(currentToken token.Token) ast_node.ASTNode {
