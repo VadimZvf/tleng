@@ -1,6 +1,7 @@
 package ast
 
 import (
+	"github.com/VadimZvf/golang/ast_error"
 	"github.com/VadimZvf/golang/ast_factory"
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/ast_token_stream"
@@ -11,27 +12,38 @@ import (
 	"github.com/VadimZvf/golang/token_variable_declaration"
 )
 
-func CreateAST(tokens []token.Token) *ast_node.ASTNode {
+func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	var tokenStream = ast_token_stream.CreateTokenStream(tokens)
-	var currentToken, isEnd = tokenStream.Look()
+	var _, isEnd = tokenStream.Look()
 	var factory = ast_factory.CreateASTFactory()
 
 	for !isEnd {
-		var node = getNode(currentToken, &tokenStream, &factory)
+		var node, err = getNode(&tokenStream, &factory)
 		factory.Append(&node)
 
+		if err != nil {
+			return factory.GetAST(), err
+		}
+
 		tokenStream.MoveNext()
-		currentToken, isEnd = tokenStream.Look()
+		_, isEnd = tokenStream.Look()
 	}
 
-	return factory.GetAST()
+	return factory.GetAST(), nil
 }
 
-func getNode(currentToken token.Token, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ast_node.ASTNode {
+func getNode(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) (ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return ast_node.ASTNode{}, ast_error.AstError{
+			Message: "File ended",
+		}
+	}
+
 	switch currentToken.Code {
 	case token_variable_declaration.VARIABLE_DECLARAION:
 		var variableNode = createNode(currentToken)
-		factory.Append(&variableNode)
 
 		var nextToken, isEnd = stream.LookNext()
 
@@ -40,36 +52,60 @@ func getNode(currentToken token.Token, stream *ast_token_stream.TokenStream, fac
 		}
 
 		if nextToken.Code == token.ASSIGNMENT {
+			factory.Append(&variableNode)
+			stream.MoveNext()
+
 			var variableNameParam = token_variable_declaration.GetVariableNameParam(currentToken)
-			var fakeKeyWordToken = token.Token{
-				Code:          token_keyword.KEY_WORD,
+			var assignmentNode = createNode(nextToken)
+			assignmentNode.Params = []ast_node.ASTNodeParam{{
+				Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+				Value:         variableNameParam.Value,
 				StartPosition: currentToken.StartPosition,
 				EndPosition:   currentToken.EndPosition,
-				Value:         variableNameParam.Value,
+			}}
+
+			stream.MoveNext()
+			var valueNode, err = getNode(stream, factory)
+
+			if err != nil {
+				return valueNode, err
 			}
-			var keyWordNode = processKeyWordToken(fakeKeyWordToken, stream)
-			return keyWordNode
+
+			assignmentNode.Body = []*ast_node.ASTNode{&valueNode}
+
+			stream.MoveNext()
+			return assignmentNode, nil
+		} else {
+			return variableNode, nil
 		}
 
+	case token_number.NUMBER:
+		return createNode(currentToken), nil
+
 	case token.ADD:
-		return createNode(currentToken)
+		return createNode(currentToken), nil
 
 	case token.SUBTRACT:
-		return createNode(currentToken)
+		return createNode(currentToken), nil
 
 	case token_keyword.KEY_WORD:
-		return processKeyWordToken(currentToken, stream)
+		return processKeyWordToken(currentToken, stream), nil
 
 	case token_function_declaration.FUNCTION_DECLARATION:
 		var functionNode = processFunctionToken(currentToken, stream)
 		factory.MovePointerLastNodeBody()
-		return functionNode
+		return functionNode, nil
 
 	case token.CLOSE_BLOCK:
 		factory.MovePointerToParent()
+
+	case token.END_LINE:
+		// Skip node
+		// stream.MoveNext()
+
 	}
 
-	return ast_node.ASTNode{}
+	return ast_node.ASTNode{}, nil
 }
 
 func createNode(currentToken token.Token) ast_node.ASTNode {

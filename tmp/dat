@@ -1,5 +1,9 @@
 const a = 12;
 
+const c;
+
+const b = a;
+
 function func(d, c, w) {
     return "Hello world";
 }

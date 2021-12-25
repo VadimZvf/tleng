@@ -52,7 +52,11 @@ func main() {
 		color.New(color.FgCyan).Printf("\"\n")
 	}
 
-	var astRoot = ast.CreateAST(tokens)
+	var astRoot, astError = ast.CreateAST(tokens)
+
+	if astError != nil {
+		fmt.Println(astError)
+	}
 
 	printASTNode(astRoot, 0)
 }
@@ -66,13 +70,13 @@ func printASTNode(node *ast_node.ASTNode, depth int) {
 
 	if len(node.Body) > 0 {
 		for _, child := range node.Body {
-			printASTNode(child, depth + 1)
+			printASTNode(child, depth+1)
 		}
 	}
 
 	if len(node.Arguments) > 0 {
 		for _, child := range node.Body {
-			printASTNode(child, depth + 1)
+			printASTNode(child, depth+1)
 		}
 	}
 }
