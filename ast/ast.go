@@ -18,8 +18,11 @@ func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	var factory = ast_factory.CreateASTFactory()
 
 	for !isEnd {
-		var node, err = getNode(&tokenStream, &factory)
-		factory.Append(&node)
+		var nodes, err = getNodes(&tokenStream)
+
+		for _, child := range nodes {
+			factory.Append(child)
+		}
 
 		if err != nil {
 			return factory.GetAST(), err
@@ -32,11 +35,11 @@ func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	return factory.GetAST(), nil
 }
 
-func getNode(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) (ast_node.ASTNode, error) {
+func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
-		return ast_node.ASTNode{}, ast_error.AstError{
+		return []*ast_node.ASTNode{}, ast_error.AstError{
 			Message: "File ended",
 		}
 	}
@@ -52,7 +55,6 @@ func getNode(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFacto
 		}
 
 		if nextToken.Code == token.ASSIGNMENT {
-			factory.Append(&variableNode)
 			stream.MoveNext()
 
 			var variableNameParam = token_variable_declaration.GetVariableNameParam(currentToken)
@@ -65,39 +67,39 @@ func getNode(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFacto
 			}}
 
 			stream.MoveNext()
-			var valueNode, err = getNode(stream, factory)
+			var valueNodes, err = getNodes(stream)
 
 			if err != nil {
-				return valueNode, err
+				return valueNodes, err
 			}
 
-			assignmentNode.Body = []*ast_node.ASTNode{&valueNode}
+			assignmentNode.Body = valueNodes
 
 			stream.MoveNext()
-			return assignmentNode, nil
+			return []*ast_node.ASTNode{&variableNode, &assignmentNode}, nil
 		} else {
-			return variableNode, nil
+			return []*ast_node.ASTNode{&variableNode}, nil
 		}
 
 	case token_number.NUMBER:
-		return createNode(currentToken), nil
+		var numberNode = createNode(currentToken)
+		return []*ast_node.ASTNode{&numberNode}, nil
 
 	case token.ADD:
-		return createNode(currentToken), nil
+		var addNode = createNode(currentToken)
+		return []*ast_node.ASTNode{&addNode}, nil
 
 	case token.SUBTRACT:
-		return createNode(currentToken), nil
+		var subtractNode = createNode(currentToken)
+		return []*ast_node.ASTNode{&subtractNode}, nil
 
 	case token_keyword.KEY_WORD:
-		return processKeyWordToken(currentToken, stream), nil
+		var keyWordNode = processKeyWordToken(stream)
+		return []*ast_node.ASTNode{&keyWordNode}, nil
 
 	case token_function_declaration.FUNCTION_DECLARATION:
-		var functionNode = processFunctionToken(currentToken, stream)
-		factory.MovePointerLastNodeBody()
-		return functionNode, nil
-
-	case token.CLOSE_BLOCK:
-		factory.MovePointerToParent()
+		var functionNode = processFunctionToken(stream)
+		return []*ast_node.ASTNode{&functionNode}, nil
 
 	case token.END_LINE:
 		// Skip node
@@ -105,7 +107,96 @@ func getNode(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFacto
 
 	}
 
-	return ast_node.ASTNode{}, nil
+	return []*ast_node.ASTNode{}, nil
+}
+
+func processKeyWordToken(stream *ast_token_stream.TokenStream) ast_node.ASTNode {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return ast_node.ASTNode{}
+	}
+
+	var nextToken, isEndNext = stream.LookNext()
+
+	if isEndNext {
+		return createNode(currentToken)
+	}
+
+	switch nextToken.Code { 
+	case token.ASSIGNMENT:
+		var assignmentNode = createNode(nextToken)
+		assignmentNode.Params = []ast_node.ASTNodeParam{{
+			Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+			Value:         currentToken.Value,
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}}
+
+		stream.MoveNext()
+		stream.MoveNext()
+
+		var valueNodes, error = getNodes(stream);
+
+		if error != nil {
+			return ast_node.ASTNode{}
+		}
+
+		assignmentNode.Body = valueNodes
+
+		return assignmentNode
+
+	case token.OPEN_EXPRESSION:
+		stream.MoveNext()
+		return ast_node.ASTNode{
+			Code: ast_node.AST_NODE_CODE_FUNCTION_CALL,
+			Params: []ast_node.ASTNodeParam{{
+				Name:          ast_node.AST_PARAM_FUNCTION_NAME,
+				Value:         currentToken.Value,
+				StartPosition: currentToken.StartPosition,
+				EndPosition:   currentToken.EndPosition,
+			}},
+			// Debug data
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	return createNode(currentToken)
+}
+
+func processFunctionToken(stream *ast_token_stream.TokenStream) ast_node.ASTNode {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return ast_node.ASTNode{}
+	}
+
+	var functionNode = createNode(currentToken)
+
+	stream.MoveNext()
+	currentToken, isEnd = stream.Look()
+
+	for !isEnd && currentToken.Code != token.CLOSE_BLOCK {
+		stream.MoveNext()
+		currentToken, isEnd = stream.Look()
+
+		var nodes, err = getNodes(stream)
+
+		if err != nil {
+			return functionNode
+		}
+
+		appendNodes(&functionNode, nodes)
+	}
+
+	return functionNode
+}
+
+func appendNodes(node *ast_node.ASTNode, children []*ast_node.ASTNode)  {
+	for _, child := range children {
+		node.Body = append(node.Body, child)
+	}
 }
 
 func createNode(currentToken token.Token) ast_node.ASTNode {
@@ -195,58 +286,4 @@ func createNode(currentToken token.Token) ast_node.ASTNode {
 	default:
 		return ast_node.ASTNode{}
 	}
-}
-
-func processKeyWordToken(currentToken token.Token, stream *ast_token_stream.TokenStream) ast_node.ASTNode {
-	var nextToken, isEnd = stream.LookNext()
-
-	if isEnd {
-		return ast_node.ASTNode{}
-	}
-
-	switch nextToken.Code {
-	case token.ASSIGNMENT:
-		var assignmentNode = createNode(nextToken)
-		assignmentNode.Params = []ast_node.ASTNodeParam{{
-			Name:          ast_node.AST_PARAM_VARIABLE_NAME,
-			Value:         currentToken.Value,
-			StartPosition: currentToken.StartPosition,
-			EndPosition:   currentToken.EndPosition,
-		}}
-
-		stream.MoveNext()
-		var valueToken, isEnd = stream.LookNext()
-
-		if isEnd {
-			return ast_node.ASTNode{}
-		}
-
-		var valueNode = createNode(valueToken)
-
-		assignmentNode.Body = []*ast_node.ASTNode{&valueNode}
-
-		stream.MoveNext()
-
-		return assignmentNode
-	}
-
-	return ast_node.ASTNode{}
-}
-
-func processFunctionToken(currentToken token.Token, stream *ast_token_stream.TokenStream) ast_node.ASTNode {
-	var nextToken, isEnd = stream.LookNext()
-
-	if isEnd {
-		return ast_node.ASTNode{}
-	}
-
-	switch nextToken.Code {
-	case token.OPEN_BLOCK:
-		var functionNode = createNode(currentToken)
-		stream.MoveNext()
-
-		return functionNode
-	}
-
-	return ast_node.ASTNode{}
 }
