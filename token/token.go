@@ -70,6 +70,12 @@ var AddProcessor = createSymbolProcessor(ADD, '+')
 var SUBTRACT = "SUBTRACT"
 var SubtractProcessor = createSymbolProcessor(SUBTRACT, '-')
 
+var SLASH = "SLASH"
+var SlashProcessor = createSymbolProcessor(SLASH, '/')
+
+var ASTERISK = "ASTERISK"
+var AsteriskProcessor = createSymbolProcessor(ASTERISK, '*')
+
 var END_LINE = "END_LINE"
 var EndLineProcessor = createSymbolProcessor(END_LINE, ';')
 

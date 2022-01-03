@@ -8,6 +8,8 @@ type ASTFactory struct {
 	root        *ast_node.ASTNode
 	currentNode *ast_node.ASTNode
 	path        []*ast_node.ASTNode
+
+	workInProgress *ast_node.ASTNode
 }
 
 func CreateASTFactory() ASTFactory {

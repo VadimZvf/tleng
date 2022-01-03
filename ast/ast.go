@@ -21,11 +21,9 @@ func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	var factory = ast_factory.CreateASTFactory()
 
 	for !isEnd {
-		var nodes, err = getNodes(&tokenStream)
+		var node, err = getNode(&tokenStream)
 
-		for _, child := range nodes {
-			factory.Append(child)
-		}
+		factory.Append(&node)
 
 		if err != nil {
 			return factory.GetAST(), err
@@ -38,11 +36,11 @@ func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	return factory.GetAST(), nil
 }
 
-func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func getNode(stream *ast_token_stream.TokenStream) (ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
-		return []*ast_node.ASTNode{}, ast_error.AstError{
+		return ast_node.ASTNode{}, ast_error.AstError{
 			Message: "File ended",
 		}
 	}
@@ -51,45 +49,27 @@ func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error)
 	var nextToken, isEndNext = stream.LookNext()
 
 	if isEndNext {
-		return []*ast_node.ASTNode{}, ast_error.AstError{
+		return ast_node.ASTNode{}, ast_error.AstError{
 			Message: "File ended",
 		}
 	}
 
 	switch nextToken.Code {
-	case token.ADD:
+	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
 		var leftNode = createNode(currentToken)
 		stream.MoveNext()
-		var addNode = createNode(nextToken)
+		var binaryNode = createNode(nextToken)
 		stream.MoveNext()
 
-		var rightNodes, err = getNodes(stream)
+		var rightNode, err = getNode(stream)
 	
 		if err != nil {
-			return []*ast_node.ASTNode{}, err
+			return ast_node.ASTNode{}, err
 		}
 
-		appendNodes(&addNode, []*ast_node.ASTNode{&leftNode})
-		appendNodes(&addNode, rightNodes)
+		appendNodes(&binaryNode, []*ast_node.ASTNode{&leftNode, &rightNode})
 
-		return []*ast_node.ASTNode{&addNode}, nil
-
-	case token.SUBTRACT:
-		var leftNode = createNode(currentToken)
-		stream.MoveNext()
-		var subtractNode = createNode(nextToken)
-		stream.MoveNext()
-
-		var rightNodes, err = getNodes(stream)
-	
-		if err != nil {
-			return []*ast_node.ASTNode{}, err
-		}
-
-		appendNodes(&subtractNode, []*ast_node.ASTNode{&leftNode})
-		appendNodes(&subtractNode, rightNodes)
-
-		return []*ast_node.ASTNode{&subtractNode}, nil
+		return binaryNode, nil
 
 	case token_read_property.READ_PROPERTY:
 		var leftNode = createNode(currentToken)
@@ -97,16 +77,15 @@ func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error)
 		var readNode = createNode(nextToken)
 		stream.MoveNext()
 
-		var rightNodes, err = getNodes(stream)
+		var rightNodes, err = getNode(stream)
 	
 		if err != nil {
-			return []*ast_node.ASTNode{}, err
+			return ast_node.ASTNode{}, err
 		}
 
-		appendNodes(&readNode, []*ast_node.ASTNode{&leftNode})
-		appendNodes(&readNode, rightNodes)
+		appendNodes(&readNode, []*ast_node.ASTNode{&leftNode, &rightNodes})
 
-		return []*ast_node.ASTNode{&readNode}, nil
+		return readNode, nil
 	}
 
 	switch currentToken.Code {
@@ -132,47 +111,47 @@ func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error)
 			}}
 
 			stream.MoveNext()
-			var valueNodes, err = getNodes(stream)
+			var valueNode, err = getNode(stream)
 
 			if err != nil {
-				return valueNodes, err
+				return valueNode, err
 			}
 
-			assignmentNode.Body = valueNodes
+			assignmentNode.Body = []*ast_node.ASTNode{&valueNode}
 
 			stream.MoveNext()
-			return []*ast_node.ASTNode{&variableNode, &assignmentNode}, nil
+			return assignmentNode, nil
 		} else {
-			return []*ast_node.ASTNode{&variableNode}, nil
+			return variableNode, nil
 		}
 
 	case token_number.NUMBER:
 		var numberNode = createNode(currentToken)
-		return []*ast_node.ASTNode{&numberNode}, nil
+		return numberNode, nil
 
 	case token_string.STRING:
 		var stringNode = createNode(currentToken)
-		return []*ast_node.ASTNode{&stringNode}, nil		
+		return stringNode, nil		
 
 	case token_return.RETURN_DECLARATION:
 		var returnNode = createNode(currentToken)
 		stream.MoveNext()
-		var returnValueNode, err = getNodes(stream)
+		var returnValueNode, err = getNode(stream)
 
 		if err != nil {
-			return []*ast_node.ASTNode{&returnNode}, err
+			return returnNode, err
 		}
 
-		returnNode.Body = returnValueNode
-		return []*ast_node.ASTNode{&returnNode}, nil
+		returnNode.Body = []*ast_node.ASTNode{&returnValueNode}
+		return returnNode, nil
 
 	case token_keyword.KEY_WORD:
 		var keyWordNode = processKeyWordToken(stream)
-		return []*ast_node.ASTNode{&keyWordNode}, nil
+		return keyWordNode, nil
 
 	case token_function_declaration.FUNCTION_DECLARATION:
 		var functionNode = processFunctionToken(stream)
-		return []*ast_node.ASTNode{&functionNode}, nil
+		return functionNode, nil
 
 	case token.END_LINE:
 		// Skip node
@@ -180,7 +159,7 @@ func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error)
 
 	}
 
-	return []*ast_node.ASTNode{}, nil
+	return ast_node.ASTNode{}, nil
 }
 
 func processKeyWordToken(stream *ast_token_stream.TokenStream) ast_node.ASTNode {
@@ -209,13 +188,13 @@ func processKeyWordToken(stream *ast_token_stream.TokenStream) ast_node.ASTNode 
 		stream.MoveNext()
 		stream.MoveNext()
 
-		var valueNodes, error = getNodes(stream);
+		var valueNode, error = getNode(stream);
 
 		if error != nil {
 			return ast_node.ASTNode{}
 		}
 
-		assignmentNode.Body = valueNodes
+		assignmentNode.Body = []*ast_node.ASTNode{&valueNode}
 
 		return assignmentNode
 
@@ -254,13 +233,13 @@ func processFunctionToken(stream *ast_token_stream.TokenStream) ast_node.ASTNode
 		stream.MoveNext()
 		currentToken, isEnd = stream.Look()
 
-		var nodes, err = getNodes(stream)
+		var node, err = getNode(stream)
 
 		if err != nil {
 			return functionNode
 		}
 
-		appendNodes(&functionNode, nodes)
+		appendNode(&functionNode, &node)
 	}
 
 	return functionNode
@@ -275,6 +254,11 @@ func appendNodes(node *ast_node.ASTNode, children []*ast_node.ASTNode)  {
 		node.Body = append(node.Body, child)
 	}
 }
+
+func appendNode(node *ast_node.ASTNode, child *ast_node.ASTNode)  {
+	node.Body = append(node.Body, child)
+}
+
 
 func createNode(currentToken token.Token) ast_node.ASTNode {
 	switch currentToken.Code {
@@ -301,17 +285,15 @@ func createNode(currentToken token.Token) ast_node.ASTNode {
 			EndPosition:   currentToken.EndPosition,
 		}
 
-	case token.ADD:
+	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
 		return ast_node.ASTNode{
-			Code: ast_node.AST_NODE_CODE_ADD,
-			// Debug data
-			StartPosition: currentToken.StartPosition,
-			EndPosition:   currentToken.EndPosition,
-		}
-
-	case token.SUBTRACT:
-		return ast_node.ASTNode{
-			Code: ast_node.AST_NODE_CODE_SUBTRACT,
+			Code: ast_node.AST_NODE_CODE_BINARY_EXPRESSION,
+			Params: []ast_node.ASTNodeParam{{
+				Name:          ast_node.AST_PARAM_BINARY_EXPRESSION_TYPE,
+				Value:         currentToken.Value,
+				StartPosition: currentToken.StartPosition,
+				EndPosition:   currentToken.EndPosition,
+			}},
 			// Debug data
 			StartPosition: currentToken.StartPosition,
 			EndPosition:   currentToken.EndPosition,
