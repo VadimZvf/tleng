@@ -1,6 +1,6 @@
 const a = 12;
 
-const c;
+const c = a.b + 23;
 
 function func(d, c, w) {
     const b = 33332;

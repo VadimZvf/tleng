@@ -9,6 +9,9 @@ import (
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_keyword"
 	"github.com/VadimZvf/golang/token_number"
+	"github.com/VadimZvf/golang/token_read_property"
+	"github.com/VadimZvf/golang/token_return"
+	"github.com/VadimZvf/golang/token_string"
 	"github.com/VadimZvf/golang/token_variable_declaration"
 )
 
@@ -42,6 +45,68 @@ func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error)
 		return []*ast_node.ASTNode{}, ast_error.AstError{
 			Message: "File ended",
 		}
+	}
+
+
+	var nextToken, isEndNext = stream.LookNext()
+
+	if isEndNext {
+		return []*ast_node.ASTNode{}, ast_error.AstError{
+			Message: "File ended",
+		}
+	}
+
+	switch nextToken.Code {
+	case token.ADD:
+		var leftNode = createNode(currentToken)
+		stream.MoveNext()
+		var addNode = createNode(nextToken)
+		stream.MoveNext()
+
+		var rightNodes, err = getNodes(stream)
+	
+		if err != nil {
+			return []*ast_node.ASTNode{}, err
+		}
+
+		appendNodes(&addNode, []*ast_node.ASTNode{&leftNode})
+		appendNodes(&addNode, rightNodes)
+
+		return []*ast_node.ASTNode{&addNode}, nil
+
+	case token.SUBTRACT:
+		var leftNode = createNode(currentToken)
+		stream.MoveNext()
+		var subtractNode = createNode(nextToken)
+		stream.MoveNext()
+
+		var rightNodes, err = getNodes(stream)
+	
+		if err != nil {
+			return []*ast_node.ASTNode{}, err
+		}
+
+		appendNodes(&subtractNode, []*ast_node.ASTNode{&leftNode})
+		appendNodes(&subtractNode, rightNodes)
+
+		return []*ast_node.ASTNode{&subtractNode}, nil
+
+	case token_read_property.READ_PROPERTY:
+		var leftNode = createNode(currentToken)
+		stream.MoveNext()
+		var readNode = createNode(nextToken)
+		stream.MoveNext()
+
+		var rightNodes, err = getNodes(stream)
+	
+		if err != nil {
+			return []*ast_node.ASTNode{}, err
+		}
+
+		appendNodes(&readNode, []*ast_node.ASTNode{&leftNode})
+		appendNodes(&readNode, rightNodes)
+
+		return []*ast_node.ASTNode{&readNode}, nil
 	}
 
 	switch currentToken.Code {
@@ -85,13 +150,21 @@ func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error)
 		var numberNode = createNode(currentToken)
 		return []*ast_node.ASTNode{&numberNode}, nil
 
-	case token.ADD:
-		var addNode = createNode(currentToken)
-		return []*ast_node.ASTNode{&addNode}, nil
+	case token_string.STRING:
+		var stringNode = createNode(currentToken)
+		return []*ast_node.ASTNode{&stringNode}, nil		
 
-	case token.SUBTRACT:
-		var subtractNode = createNode(currentToken)
-		return []*ast_node.ASTNode{&subtractNode}, nil
+	case token_return.RETURN_DECLARATION:
+		var returnNode = createNode(currentToken)
+		stream.MoveNext()
+		var returnValueNode, err = getNodes(stream)
+
+		if err != nil {
+			return []*ast_node.ASTNode{&returnNode}, err
+		}
+
+		returnNode.Body = returnValueNode
+		return []*ast_node.ASTNode{&returnNode}, nil
 
 	case token_keyword.KEY_WORD:
 		var keyWordNode = processKeyWordToken(stream)
@@ -193,6 +266,10 @@ func processFunctionToken(stream *ast_token_stream.TokenStream) ast_node.ASTNode
 	return functionNode
 }
 
+// ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+// ┃         Utilities          ┃
+// ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
 func appendNodes(node *ast_node.ASTNode, children []*ast_node.ASTNode)  {
 	for _, child := range children {
 		node.Body = append(node.Body, child)
@@ -240,6 +317,14 @@ func createNode(currentToken token.Token) ast_node.ASTNode {
 			EndPosition:   currentToken.EndPosition,
 		}
 
+	case token_read_property.READ_PROPERTY:
+		return ast_node.ASTNode{
+			Code: ast_node.AST_NODE_CODE_READ_PROP,
+			// Debug data
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+
 	case token_number.NUMBER:
 		return ast_node.ASTNode{
 			Code: ast_node.AST_NODE_CODE_NUMBER,
@@ -254,15 +339,37 @@ func createNode(currentToken token.Token) ast_node.ASTNode {
 			EndPosition:   currentToken.EndPosition,
 		}
 
+	case token_string.STRING:
+		return ast_node.ASTNode{
+			Code: ast_node.AST_NODE_CODE_STRING,
+			Params: []ast_node.ASTNodeParam{{
+				Name:          ast_node.AST_PARAM_STRING_VALUE,
+				Value:         currentToken.Value,
+				StartPosition: currentToken.StartPosition,
+				EndPosition:   currentToken.EndPosition,
+			}},
+			// Debug data
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+
 	case token_keyword.KEY_WORD:
 		return ast_node.ASTNode{
-			Code: ast_node.AST_NODE_CODE_REFERENDE,
+			Code: ast_node.AST_NODE_CODE_REFERENCE,
 			Params: []ast_node.ASTNodeParam{{
 				Name:          ast_node.AST_PARAM_VARIABLE_NAME,
 				Value:         currentToken.Value,
 				StartPosition: currentToken.StartPosition,
 				EndPosition:   currentToken.EndPosition,
 			}},
+			// Debug data
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+
+	case token_return.RETURN_DECLARATION:
+		return ast_node.ASTNode{
+			Code: ast_node.AST_NODE_CODE_RETURN,
 			// Debug data
 			StartPosition: currentToken.StartPosition,
 			EndPosition:   currentToken.EndPosition,
