@@ -55,3 +55,10 @@ cd tokenizer
 go test
 cd ..
 echo ""
+
+echo "Parser"
+echo "======================"
+cd parser
+go test
+cd ..
+echo ""

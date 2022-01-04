@@ -43,6 +43,7 @@ func TestStringVariable(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.ASSIGNMENT,
+		Value: "=",
 		StartPosition: 11,
 		EndPosition:   11,
 	}) {
@@ -96,6 +97,7 @@ func TestKeywordLikeFunctionDecloration(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.OPEN_EXPRESSION,
+		Value: "(",
 		StartPosition: 9,
 		EndPosition:   9,
 	}) {
@@ -104,6 +106,7 @@ func TestKeywordLikeFunctionDecloration(t *testing.T) {
 
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token.CLOSE_EXPRESSION,
+		Value: ")",
 		StartPosition: 10,
 		EndPosition:   10,
 	}) {
@@ -138,6 +141,7 @@ func TestCopyVariableByLink(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.ASSIGNMENT,
+		Value: "=",
 		StartPosition: 8,
 		EndPosition:   8,
 	}) {
@@ -207,6 +211,7 @@ func TestFunctionDecloration(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.OPEN_BLOCK,
+		Value: "{",
 		StartPosition: 15,
 		EndPosition:   15,
 	}) {
@@ -215,6 +220,7 @@ func TestFunctionDecloration(t *testing.T) {
 
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token.CLOSE_BLOCK,
+		Value: "}",
 		StartPosition: 16,
 		EndPosition:   16,
 	}) {
@@ -267,6 +273,7 @@ func TestFunctionDeclorationWithArguments(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.OPEN_BLOCK,
+		Value: "{",
 		StartPosition: 19,
 		EndPosition:   19,
 	}) {
@@ -275,6 +282,7 @@ func TestFunctionDeclorationWithArguments(t *testing.T) {
 
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token.CLOSE_BLOCK,
+		Value: "}",
 		StartPosition: 20,
 		EndPosition:   20,
 	}) {
@@ -313,6 +321,7 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.OPEN_BLOCK,
+		Value: "{",
 		StartPosition: 18,
 		EndPosition:   18,
 	}) {
@@ -338,6 +347,7 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 
 	if !isSameToken(tokens[4], token.Token{
 		Code:          token.CLOSE_BLOCK,
+		Value: "}",
 		StartPosition: 48,
 		EndPosition:   48,
 	}) {
@@ -350,7 +360,7 @@ func TestSyntaxError(t *testing.T) {
 	src.FullText = `
 		const a = 123;
 
-		-
+		^
 
 		function foo() {
 
@@ -371,7 +381,7 @@ func TestSyntaxError(t *testing.T) {
 		t.Errorf("Should return parser error")
 	}
 
-	if re.Message != "Syntax error, unexpected symbol: -" {
+	if re.Message != "Syntax error, unexpected symbol: ^" {
 		t.Errorf("Should return syntax error message, but receinve: \"%s\"", re.Message)
 	}
 
