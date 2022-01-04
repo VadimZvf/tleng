@@ -5,11 +5,8 @@ import (
 )
 
 type ASTFactory struct {
-	root        *ast_node.ASTNode
-	currentNode *ast_node.ASTNode
-	path        []*ast_node.ASTNode
-
-	workInProgress *ast_node.ASTNode
+	root      *ast_node.ASTNode
+	workStack []*ast_node.ASTNode
 }
 
 func CreateASTFactory() ASTFactory {
@@ -18,33 +15,41 @@ func CreateASTFactory() ASTFactory {
 	}
 
 	return ASTFactory{
-		root:        &rootNode,
-		currentNode: &rootNode,
-		path:        []*ast_node.ASTNode{},
+		root:      &rootNode,
+		workStack: []*ast_node.ASTNode{},
 	}
 }
 
 func (factory *ASTFactory) Append(node *ast_node.ASTNode) {
-	factory.currentNode.Body = append(factory.currentNode.Body, node)
+	factory.root.Body = append(factory.root.Body, node)
 }
 
-func (factory *ASTFactory) GetCurrent() *ast_node.ASTNode {
-	return factory.currentNode
+func (factory *ASTFactory) PushToWorkStack(node *ast_node.ASTNode) {
+	factory.workStack = append(factory.workStack, node)
 }
 
-func (factory *ASTFactory) MovePointerToParent() {
-	if len(factory.path) > 0 {
-		var parentNode = factory.path[len(factory.path)-1]
-		factory.currentNode = parentNode
-		factory.path = factory.path[:len(factory.path)-1]
+func (factory *ASTFactory) GetLastInWorkStack() *ast_node.ASTNode {
+	if len(factory.workStack) == 0 {
+		return nil
 	}
+
+	return factory.workStack[len(factory.workStack)-1]
 }
 
-func (factory *ASTFactory) MovePointerLastNodeBody() {
-	var bodyItemsCount = len(factory.currentNode.Body)
-	var lastItemInBody = factory.currentNode.Body[bodyItemsCount-1]
-	factory.path = append(factory.path, factory.currentNode)
-	factory.currentNode = lastItemInBody
+func (factory *ASTFactory) PopWorkStack() *ast_node.ASTNode {
+	var lastItem = factory.GetLastInWorkStack()
+
+	if lastItem == nil {
+		return lastItem
+	}
+
+	factory.workStack = factory.workStack[:len(factory.workStack)-1]
+
+	return lastItem
+}
+
+func (factory *ASTFactory) GetWorkStack() []*ast_node.ASTNode {
+	return factory.workStack
 }
 
 func (factory *ASTFactory) GetAST() *ast_node.ASTNode {
