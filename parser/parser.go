@@ -29,7 +29,7 @@ func CreateParser(source iSource) Parser {
 	}
 }
 
-func (parser *Parser)Parse(isDebug bool) (*ast_node.ASTNode, error) {
+func (parser *Parser) Parse(isDebug bool) (*ast_node.ASTNode, error) {
 	var buffer = tokenizer_buffer.CreateBuffer(parser.source)
 	var tknzr = tokenizer.GetTokenizer(&buffer)
 
@@ -47,10 +47,10 @@ func (parser *Parser)Parse(isDebug bool) (*ast_node.ASTNode, error) {
 			color.New(color.FgCyan).Printf(fmt.Sprint(v.StartPosition))
 			color.New(color.FgCyan).Printf(" type: ")
 			color.New(color.FgYellow).Printf(v.Code)
-	
+
 			color.New(color.FgCyan).Printf(" value: \"")
 			color.New(color.FgGreen).Printf(v.Value)
-	
+
 			if v.Code == token_function_declaration.FUNCTION_DECLARATION || v.Code == token_variable_declaration.VARIABLE_DECLARAION {
 				for _, param := range v.Params {
 					color.New(color.FgGreen).Printf(param.Name)
@@ -58,10 +58,49 @@ func (parser *Parser)Parse(isDebug bool) (*ast_node.ASTNode, error) {
 					color.New(color.FgGreen).Printf(param.Value)
 				}
 			}
-	
+
 			color.New(color.FgCyan).Printf("\"\n")
 		}
 	}
 
-	return ast.CreateAST(tokens)
+	var ast, astError = ast.CreateAST(tokens)
+
+	if astError != nil && isDebug {
+		var std = stdout.CreateStdout()
+		fmt.Printf("_____________________________________________\n")
+		parser_error_printer.PrintError(&buffer, &std, astError)
+		fmt.Printf("_____________________________________________\n\n")
+
+		if ast != nil {
+			printASTNode(ast, 0)
+		}
+	}
+
+	return ast, astError
+}
+
+func printASTNode(node *ast_node.ASTNode, depth int) {
+	for i := 0; i < depth; i++ {
+		fmt.Printf("|    ")
+	}
+	fmt.Printf("Code: %s ", node.Code)
+	if len(node.Params) > 0 {
+		fmt.Printf("Params: ")
+		for _, param := range node.Params {
+			fmt.Printf("%s=\"%s\" ", param.Name, param.Value)
+		}
+	}
+	fmt.Printf("\n")
+
+	if len(node.Body) > 0 {
+		for _, child := range node.Body {
+			printASTNode(child, depth+1)
+		}
+	}
+
+	if len(node.Arguments) > 0 {
+		for _, child := range node.Body {
+			printASTNode(child, depth+1)
+		}
+	}
 }

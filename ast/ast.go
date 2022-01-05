@@ -1,16 +1,15 @@
 package ast
 
 import (
-	"github.com/VadimZvf/golang/ast_error"
+	"fmt"
+
 	"github.com/VadimZvf/golang/ast_factory"
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/ast_token_stream"
+	"github.com/VadimZvf/golang/parser_error"
 	"github.com/VadimZvf/golang/token"
-	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_keyword"
 	"github.com/VadimZvf/golang/token_number"
-	"github.com/VadimZvf/golang/token_read_property"
-	"github.com/VadimZvf/golang/token_return"
 	"github.com/VadimZvf/golang/token_string"
 	"github.com/VadimZvf/golang/token_variable_declaration"
 )
@@ -21,7 +20,11 @@ func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	var factory = ast_factory.CreateASTFactory()
 
 	for !isEnd {
-		var nodes, err = getNode(&tokenStream, &factory)
+		var nodes, err = getNodes(&tokenStream, &factory)
+
+		for _, node := range nodes {
+			factory.Append(node)
+		}
 
 		if err != nil {
 			return factory.GetAST(), err
@@ -29,264 +32,364 @@ func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 
 		tokenStream.MoveNext()
 		_, isEnd = tokenStream.Look()
-
-		if factory.GetLastInWorkStack() == nil {
-			for _, node := range nodes {
-				factory.Append(node)
-			}
-		}
 	}
 
 	return factory.GetAST(), nil
 }
 
-func getNode(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func getNodes(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
-		return []*ast_node.ASTNode{}, ast_error.AstError{
-			Message: "File ended",
+		return []*ast_node.ASTNode{}, parser_error.ParserError{
+			Message:       "Unexpected file end. At getNodes",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
 		}
 	}
 
 	switch currentToken.Code {
 	case token_variable_declaration.VARIABLE_DECLARAION:
-		var variableNode = ast_node.CreateNode(currentToken)
-
-		var nextToken, isEndNext = stream.LookNext()
-
-		if nextToken.Code != token.ASSIGNMENT || isEndNext {
-			return []*ast_node.ASTNode{&variableNode}, nil
-		}
-
-		factory.PushToWorkStack(&variableNode)
-		stream.MoveNext()
-		var nextNodes, err = getNode(stream, factory)
-
-		if err != nil {
-			return []*ast_node.ASTNode{&variableNode}, err
-		}
-
-		return append([]*ast_node.ASTNode{&variableNode}, nextNodes...), nil
-
-	case token.ASSIGNMENT:
-		var referenceNode = factory.PopWorkStack()
-
-		if referenceNode == nil {
-			return []*ast_node.ASTNode{}, ast_error.AstError{
-				Message: "Reference for assignment not defined! start: " + string(currentToken.StartPosition),
-			}
-		}
-
-		var variableNameParam = ast_node.GetVariableNameParam(referenceNode)
-		var assignmentNode = ast_node.CreateNode(currentToken)
-		assignmentNode.Params = []ast_node.ASTNodeParam{{
-			Name:          ast_node.AST_PARAM_VARIABLE_NAME,
-			Value:         variableNameParam.Value,
-			StartPosition: variableNameParam.StartPosition,
-			EndPosition:   variableNameParam.EndPosition,
-		}}
-
-		stream.MoveNext()
-		var valueNodes, err = getNode(stream, factory)
-
-		if err != nil {
-			return valueNodes, err
-		}
-
-		appendNodes(&assignmentNode, valueNodes)
-
-		return []*ast_node.ASTNode{&assignmentNode}, nil
+		return processVariableDeclaration(stream, factory)
 
 	case token_number.NUMBER:
-		var numberNode = ast_node.CreateNode(currentToken)
-		var nextToken, isEndNext = stream.LookNext()
-
-		if nextToken.Code == token.END_LINE || isEndNext {
-			stream.MoveNext()
-			return []*ast_node.ASTNode{&numberNode}, nil
-		}
-
-		factory.PushToWorkStack(&numberNode)
-		return []*ast_node.ASTNode{}, nil
+		return processNumber(stream, factory)
 
 	case token_string.STRING:
-		var stringNode = ast_node.CreateNode(currentToken)
-		var nextToken, isEndNext = stream.LookNext()
-
-		if nextToken.Code == token.END_LINE || isEndNext {
-			stream.MoveNext()
-			return []*ast_node.ASTNode{&stringNode}, nil
-		}
-
-		factory.PushToWorkStack(&stringNode)
-		return []*ast_node.ASTNode{}, nil
-
-	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
-		var leftNode = factory.PopWorkStack()
-		stream.MoveNext()
-		var binaryNode = ast_node.CreateNode(currentToken)
-		stream.MoveNext()
-
-		var rightNode, err = getNode(stream, factory)
-
-		if err != nil {
-			return []*ast_node.ASTNode{}, err
-		}
-
-		appendNode(&binaryNode, leftNode)
-		appendNodes(&binaryNode, rightNode)
-
-		return []*ast_node.ASTNode{&binaryNode}, nil
-
-	case token_read_property.READ_PROPERTY:
-		var leftNode = factory.PopWorkStack()
-		stream.MoveNext()
-		var readNode = ast_node.CreateNode(currentToken)
-		stream.MoveNext()
-
-		var rightNodes, err = getNode(stream, factory)
-
-		if err != nil {
-			return []*ast_node.ASTNode{}, err
-		}
-
-		appendNode(&readNode, leftNode)
-		appendNodes(&readNode, rightNodes)
-
-		return []*ast_node.ASTNode{&readNode}, nil
-
-	case token_return.RETURN_DECLARATION:
-		var returnNode = ast_node.CreateNode(currentToken)
-		stream.MoveNext()
-		var returnValueNode, err = getNode(stream, factory)
-
-		if err != nil {
-			return []*ast_node.ASTNode{&returnNode}, err
-		}
-
-		appendNodes(&returnNode, returnValueNode)
-		return []*ast_node.ASTNode{&returnNode}, nil
+		return processString(stream, factory)
 
 	case token_keyword.KEY_WORD:
-		var keyWordNode = processKeyWordToken(stream, factory)
-		return []*ast_node.ASTNode{&keyWordNode}, nil
-
-	case token_function_declaration.FUNCTION_DECLARATION:
-		var functionNode = processFunctionToken(stream, factory)
-		return []*ast_node.ASTNode{&functionNode}, nil
+		return processKeyWord(stream, factory)
 
 	case token.OPEN_EXPRESSION:
-		var parenthesizedExpressionNode = ast_node.CreateNode(currentToken)
-		factory.PushToWorkStack(&parenthesizedExpressionNode)
-
-		return []*ast_node.ASTNode{}, nil
-
-	case token.CLOSE_EXPRESSION:
-		var childNode = factory.PopWorkStack()
-
-		if childNode == nil {
-			return []*ast_node.ASTNode{}, nil
-		}
-
-		if childNode.Code == ast_node.AST_NODE_CODE_PARENTHESIZED_EXPRESSION {
-			return []*ast_node.ASTNode{childNode}, nil
-		}
-
-		var parenthesizedExpressionNode = factory.PopWorkStack()
-		parenthesizedExpressionNode.Body = []*ast_node.ASTNode{childNode}
-
-		return []*ast_node.ASTNode{parenthesizedExpressionNode}, nil
+		return processParenthesizedExpression(stream, factory)
 
 	case token.END_LINE:
-		var lastNode = factory.PopWorkStack()
-		return []*ast_node.ASTNode{lastNode}, nil
+		return []*ast_node.ASTNode{}, nil
 	}
 
-	return []*ast_node.ASTNode{}, nil
+	return []*ast_node.ASTNode{}, parser_error.ParserError{
+		Message:       "Unknown token. Code: " + currentToken.Code,
+		StartPosition: currentToken.StartPosition,
+		EndPosition:   currentToken.EndPosition,
+	}
 }
 
-func processKeyWordToken(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ast_node.ASTNode {
+func processVariableDeclaration(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
-		return ast_node.ASTNode{}
+		return []*ast_node.ASTNode{}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at variable declaration processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var variableDeclarationNode = ast_node.CreateNode(currentToken)
+
+	var nextToken, isEndNext = stream.LookNext()
+
+	if isEndNext {
+		return []*ast_node.ASTNode{&variableDeclarationNode}, nil
+	}
+
+	switch nextToken.Code {
+	case token.ASSIGNMENT:
+		var variableNameParam = ast_node.GetVariableNameParam(&variableDeclarationNode)
+		var referenceNode = ast_node.ASTNode{
+			Code: ast_node.AST_NODE_CODE_REFERENCE,
+			Params: []ast_node.ASTNodeParam{{
+				Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+				Value:         variableNameParam.Value,
+				StartPosition: variableNameParam.StartPosition,
+				EndPosition:   variableNameParam.EndPosition,
+			}},
+			StartPosition: variableNameParam.StartPosition,
+			EndPosition:   variableNameParam.EndPosition,
+		}
+
+		stream.MoveNext()
+
+		var assignmentNodes, assignmentNodeParsingError = processAssignment(&referenceNode, stream, factory)
+
+		if assignmentNodeParsingError != nil {
+			return []*ast_node.ASTNode{&variableDeclarationNode}, mergeParserErrors(parser_error.ParserError{
+				Message: "Parsing error. At assignment with variable declaration",
+			}, assignmentNodeParsingError)
+		}
+
+		if len(assignmentNodes) != 1 {
+			return []*ast_node.ASTNode{&variableDeclarationNode}, parser_error.ParserError{
+				Message:       "Parsing error. Should assign only one node. But received: " + fmt.Sprint(len(assignmentNodes)),
+				StartPosition: currentToken.StartPosition,
+				EndPosition:   currentToken.EndPosition,
+			}
+		}
+
+		return []*ast_node.ASTNode{&variableDeclarationNode, assignmentNodes[0]}, nil
+	}
+
+	return []*ast_node.ASTNode{&variableDeclarationNode}, nil
+}
+
+func processKeyWord(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at variable declaration processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var referenceNode = ast_node.CreateNode(currentToken)
+
+	var nextToken, isEndNext = stream.LookNext()
+
+	if isEndNext {
+		return []*ast_node.ASTNode{&referenceNode}, nil
+	}
+
+	switch nextToken.Code {
+	case token.ASSIGNMENT:
+		stream.MoveNext()
+
+		var assignmentNodes, assignmentNodeParsingError = processAssignment(&referenceNode, stream, factory)
+
+		if assignmentNodeParsingError != nil {
+			return []*ast_node.ASTNode{&referenceNode}, mergeParserErrors(parser_error.ParserError{
+				Message: "Parsing error. At assignment with variable declaration",
+			}, assignmentNodeParsingError)
+		}
+
+		if len(assignmentNodes) != 1 {
+			return []*ast_node.ASTNode{&referenceNode}, parser_error.ParserError{
+				Message:       "Parsing error. Should assign only one node. But received: " + fmt.Sprint(len(assignmentNodes)),
+				StartPosition: currentToken.StartPosition,
+				EndPosition:   currentToken.EndPosition,
+			}
+		}
+
+		return []*ast_node.ASTNode{assignmentNodes[0]}, nil
+
+	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
+		stream.MoveNext()
+		return processBinaryExpression(&referenceNode, stream, factory)
+	}
+
+	return []*ast_node.ASTNode{&referenceNode}, nil
+}
+
+func processNumber(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at number processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var numberNode = ast_node.CreateNode(currentToken)
+
+	var nextToken, isEndNext = stream.LookNext()
+
+	if isEndNext {
+		return []*ast_node.ASTNode{&numberNode}, nil
+	}
+
+	switch nextToken.Code {
+	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
+		stream.MoveNext()
+		return processBinaryExpression(&numberNode, stream, factory)
+	}
+
+	return []*ast_node.ASTNode{&numberNode}, nil
+}
+
+func processString(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at number processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var stringNode = ast_node.CreateNode(currentToken)
+
+	var nextToken, isEndNext = stream.LookNext()
+
+	if isEndNext {
+		return []*ast_node.ASTNode{&stringNode}, nil
+	}
+
+	switch nextToken.Code {
+	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
+		stream.MoveNext()
+		return processBinaryExpression(&stringNode, stream, factory)
+	}
+
+	return []*ast_node.ASTNode{&stringNode}, nil
+}
+
+func processAssignment(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at assignment processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var assignmentNode = ast_node.CreateNode(currentToken)
+
+	stream.MoveNext()
+
+	var rightNodes, rightNodesParsingError = getNodes(stream, factory)
+
+	if rightNodesParsingError != nil {
+		return []*ast_node.ASTNode{leftNode}, mergeParserErrors(parser_error.ParserError{
+			Message: "Failed parse right node of assignment expression",
+		}, rightNodesParsingError)
+	}
+
+	if len(rightNodes) != 1 {
+		return []*ast_node.ASTNode{leftNode}, parser_error.ParserError{
+			Message:       "Parsing error. Right node of assignment expression should have only one node. But received: " + fmt.Sprint(len(rightNodes)),
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	appendNode(&assignmentNode, leftNode)
+	appendNodes(&assignmentNode, rightNodes)
+
+	return []*ast_node.ASTNode{&assignmentNode}, nil
+}
+
+func processBinaryExpression(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{leftNode}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at binary expression processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var binaryNode = ast_node.CreateNode(currentToken)
+	stream.MoveNext()
+	var rightNodes, rightNodeError = getNodes(stream, factory)
+
+	if rightNodeError != nil {
+		return []*ast_node.ASTNode{leftNode}, mergeParserErrors(parser_error.ParserError{
+			Message: "Failed parse right node of binary expression",
+		}, rightNodeError)
+	}
+
+	if len(rightNodes) != 1 {
+		return []*ast_node.ASTNode{leftNode}, parser_error.ParserError{
+			Message:       "Parsing error. Right node of binary expression should have only one node. But received: " + fmt.Sprint(len(rightNodes)),
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	appendNodes(&binaryNode, []*ast_node.ASTNode{
+		leftNode,
+		rightNodes[0],
+	})
+
+	return []*ast_node.ASTNode{&binaryNode}, nil
+}
+
+func processParenthesizedExpression(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at parenthesized expression processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var parenthesizedExpressionNode = ast_node.CreateNode(currentToken)
+	stream.MoveNext()
+	var valueNodes, valueNodeError = getNodes(stream, factory)
+
+	if valueNodeError != nil {
+		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, mergeParserErrors(parser_error.ParserError{
+			Message: "Failed parse value node of parenthesized expression",
+		}, valueNodeError)
+	}
+
+	if len(valueNodes) != 1 {
+		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, parser_error.ParserError{
+			Message:       "Parsing error. Parenthesized expression should have only one value node. But received: " + fmt.Sprint(len(valueNodes)),
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
 	}
 
 	var nextToken, isEndNext = stream.LookNext()
 
 	if isEndNext {
-		return ast_node.CreateNode(currentToken)
+		appendNodes(&parenthesizedExpressionNode, valueNodes)
+
+		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, nil
+	}
+
+	if nextToken.Code != token.CLOSE_EXPRESSION {
+		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, parser_error.ParserError{
+			Message:       "Failed parse parenthesized expression. Expression should be closed. But received token: " + nextToken.Code,
+			StartPosition: nextToken.StartPosition,
+			EndPosition:   nextToken.EndPosition,
+		}
+	}
+
+	stream.MoveNext()
+	appendNodes(&parenthesizedExpressionNode, valueNodes)
+
+	nextToken, isEndNext = stream.LookNext()
+
+	if isEndNext {
+		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, nil
 	}
 
 	switch nextToken.Code {
-	case token.ASSIGNMENT:
-		var assignmentNode = ast_node.CreateNode(nextToken)
-		assignmentNode.Params = []ast_node.ASTNodeParam{{
-			Name:          ast_node.AST_PARAM_VARIABLE_NAME,
-			Value:         currentToken.Value,
-			StartPosition: currentToken.StartPosition,
-			EndPosition:   currentToken.EndPosition,
-		}}
-
+	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
 		stream.MoveNext()
-		stream.MoveNext()
+		var binaryExpressionNodes, binaryExpressionNodeError = processBinaryExpression(&parenthesizedExpressionNode, stream, factory)
 
-		var valueNodes, error = getNode(stream, factory)
-
-		if error != nil {
-			return ast_node.ASTNode{}
+		if binaryExpressionNodeError != nil {
+			return []*ast_node.ASTNode{&parenthesizedExpressionNode}, mergeParserErrors(parser_error.ParserError{
+				Message: "Failed parse binary expression node in parenthesized expression",
+			}, binaryExpressionNodeError)
 		}
 
-		appendNodes(&assignmentNode, valueNodes)
-
-		return assignmentNode
-
-	case token.OPEN_EXPRESSION:
-		stream.MoveNext()
-		return ast_node.ASTNode{
-			Code: ast_node.AST_NODE_CODE_FUNCTION_CALL,
-			Params: []ast_node.ASTNodeParam{{
-				Name:          ast_node.AST_PARAM_FUNCTION_NAME,
-				Value:         currentToken.Value,
-				StartPosition: currentToken.StartPosition,
-				EndPosition:   currentToken.EndPosition,
-			}},
-			// Debug data
-			StartPosition: currentToken.StartPosition,
-			EndPosition:   currentToken.EndPosition,
-		}
-	}
-
-	return ast_node.CreateNode(currentToken)
-}
-
-func processFunctionToken(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ast_node.ASTNode {
-	var currentToken, isEnd = stream.Look()
-
-	if isEnd {
-		return ast_node.ASTNode{}
-	}
-
-	var functionNode = ast_node.CreateNode(currentToken)
-
-	stream.MoveNext()
-	currentToken, isEnd = stream.Look()
-
-	for !isEnd && currentToken.Code != token.CLOSE_BLOCK {
-		stream.MoveNext()
-		currentToken, isEnd = stream.Look()
-
-		var bodyNodes, err = getNode(stream, factory)
-
-		if err != nil {
-			return functionNode
+		if len(binaryExpressionNodes) != 1 {
+			return binaryExpressionNodes, parser_error.ParserError{
+				Message:       "Parsing error. Binary expression should has only one node. But received: " + fmt.Sprint(len(binaryExpressionNodes)),
+				StartPosition: nextToken.StartPosition,
+				EndPosition:   nextToken.EndPosition,
+			}
 		}
 
-		appendNodes(&functionNode, bodyNodes)
+		return []*ast_node.ASTNode{binaryExpressionNodes[0]}, nil
+
 	}
 
-	return functionNode
+	return []*ast_node.ASTNode{&parenthesizedExpressionNode}, nil
 }
 
 // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -301,4 +404,24 @@ func appendNodes(node *ast_node.ASTNode, children []*ast_node.ASTNode) {
 
 func appendNode(node *ast_node.ASTNode, child *ast_node.ASTNode) {
 	node.Body = append(node.Body, child)
+}
+
+func mergeParserErrors(first error, second error) error {
+	firstParserError, firstCastOk := first.(parser_error.ParserError)
+
+	if !firstCastOk {
+		return firstParserError
+	}
+
+	secondParserError, secondCastOk := second.(parser_error.ParserError)
+
+	if !secondCastOk {
+		return firstParserError
+	}
+
+	firstParserError.Message = secondParserError.Message + "\n  " + firstParserError.Message
+	firstParserError.StartPosition = secondParserError.StartPosition
+	firstParserError.EndPosition = secondParserError.EndPosition
+
+	return firstParserError
 }

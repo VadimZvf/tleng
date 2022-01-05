@@ -18,11 +18,11 @@ func main() {
 	var astRoot, astError = parser.Parse(true)
 
 	if astError != nil {
-		os.Exit(1)
+		fmt.Println(astError)
 	}
 
 	if astError != nil {
-		fmt.Println(astError)
+		os.Exit(1)
 	}
 
 	printASTNode(astRoot, 0)
