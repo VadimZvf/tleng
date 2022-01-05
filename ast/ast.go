@@ -356,6 +356,7 @@ func processParenthesizedExpression(stream *ast_token_stream.TokenStream, factor
 			EndPosition:   nextToken.EndPosition,
 		}
 	}
+	parenthesizedExpressionNode.EndPosition = nextToken.EndPosition
 
 	stream.MoveNext()
 	appendNodes(&parenthesizedExpressionNode, valueNodes)

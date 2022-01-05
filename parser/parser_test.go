@@ -525,6 +525,261 @@ func TestReferenceWithNumberSumm(t *testing.T) {
 	}
 }
 
+func TestParenthesizedExpression(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `
+		bar = (foo + 55);
+	`
+
+	var parser = CreateParser(src)
+	var ast, err = parser.Parse(false)
+
+	var expectedAst = ast_node.ASTNode{
+		Code: ast_node.AST_NODE_CODE_ROOT,
+		Body: []*ast_node.ASTNode{
+			{
+				Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
+				Body: []*ast_node.ASTNode{
+					{
+						Code: ast_node.AST_NODE_CODE_REFERENCE,
+						Params: []ast_node.ASTNodeParam{
+							{
+								Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+								Value:         "bar",
+								StartPosition: 3,
+								EndPosition:   5,
+							},
+						},
+						StartPosition: 3,
+						EndPosition:   5,
+					},
+					{
+						Code: ast_node.AST_NODE_CODE_PARENTHESIZED_EXPRESSION,
+						Body: []*ast_node.ASTNode{
+							{
+								Code: ast_node.AST_NODE_CODE_BINARY_EXPRESSION,
+								Params: []ast_node.ASTNodeParam{
+									{
+										Name:          ast_node.AST_PARAM_BINARY_EXPRESSION_TYPE,
+										Value:         "+",
+										StartPosition: 14,
+										EndPosition:   14,
+									},
+								},
+								Body: []*ast_node.ASTNode{
+									{
+										Code: ast_node.AST_NODE_CODE_REFERENCE,
+										Params: []ast_node.ASTNodeParam{
+											{
+												Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+												Value:         "foo",
+												StartPosition: 10,
+												EndPosition:   12,
+											},
+										},
+										StartPosition: 10,
+										EndPosition:   12,
+									},
+									{
+										Code: ast_node.AST_NODE_CODE_NUMBER,
+										Params: []ast_node.ASTNodeParam{
+											{
+												Name:          ast_node.AST_PARAM_NUMBER_VALUE,
+												Value:         "55",
+												StartPosition: 16,
+												EndPosition:   17,
+											},
+										},
+										StartPosition: 16,
+										EndPosition:   17,
+									},
+								},
+								StartPosition: 14,
+								EndPosition:   14,
+							},
+						},
+						StartPosition: 9,
+						EndPosition:   18,
+					},
+				},
+				StartPosition: 7,
+				EndPosition:   7,
+			},
+		},
+	}
+
+	var diff = compareAst(ast, &expectedAst)
+
+	if len(diff) > 0 {
+		t.Errorf("Different AST")
+		t.Errorf("Message: %s", diff)
+	}
+
+	if err != nil {
+		t.Errorf("Should parse without errors")
+		t.Errorf("Failed with message: %s", err.Error())
+	}
+}
+
+func TestTwoParenthesizedExpression(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `
+		baz = (foo + 55) / (9 - 3);
+	`
+
+	var parser = CreateParser(src)
+	var ast, err = parser.Parse(false)
+
+	var expectedAst = ast_node.ASTNode{
+		Code: ast_node.AST_NODE_CODE_ROOT,
+		Body: []*ast_node.ASTNode{
+			{
+				Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
+				Body: []*ast_node.ASTNode{
+					{
+						Code: ast_node.AST_NODE_CODE_REFERENCE,
+						Params: []ast_node.ASTNodeParam{
+							{
+								Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+								Value:         "baz",
+								StartPosition: 3,
+								EndPosition:   5,
+							},
+						},
+						StartPosition: 3,
+						EndPosition:   5,
+					},
+					{
+						Code: ast_node.AST_NODE_CODE_BINARY_EXPRESSION,
+						Params: []ast_node.ASTNodeParam{
+							{
+								Name:          ast_node.AST_PARAM_BINARY_EXPRESSION_TYPE,
+								Value:         "/",
+								StartPosition: 20,
+								EndPosition:   20,
+							},
+						},
+						Body: []*ast_node.ASTNode{
+							{
+								Code: ast_node.AST_NODE_CODE_PARENTHESIZED_EXPRESSION,
+								Body: []*ast_node.ASTNode{
+									{
+										Code: ast_node.AST_NODE_CODE_BINARY_EXPRESSION,
+										Params: []ast_node.ASTNodeParam{
+											{
+												Name:          ast_node.AST_PARAM_BINARY_EXPRESSION_TYPE,
+												Value:         "+",
+												StartPosition: 14,
+												EndPosition:   14,
+											},
+										},
+										Body: []*ast_node.ASTNode{
+											{
+												Code: ast_node.AST_NODE_CODE_REFERENCE,
+												Params: []ast_node.ASTNodeParam{
+													{
+														Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+														Value:         "foo",
+														StartPosition: 10,
+														EndPosition:   12,
+													},
+												},
+												StartPosition: 10,
+												EndPosition:   12,
+											},
+											{
+												Code: ast_node.AST_NODE_CODE_NUMBER,
+												Params: []ast_node.ASTNodeParam{
+													{
+														Name:          ast_node.AST_PARAM_NUMBER_VALUE,
+														Value:         "55",
+														StartPosition: 16,
+														EndPosition:   17,
+													},
+												},
+												StartPosition: 16,
+												EndPosition:   17,
+											},
+										},
+										StartPosition: 14,
+										EndPosition:   14,
+									},
+								},
+								StartPosition: 9,
+								EndPosition:   18,
+							},
+							{
+								Code: ast_node.AST_NODE_CODE_PARENTHESIZED_EXPRESSION,
+								Body: []*ast_node.ASTNode{
+									{
+										Code: ast_node.AST_NODE_CODE_BINARY_EXPRESSION,
+										Params: []ast_node.ASTNodeParam{
+											{
+												Name:          ast_node.AST_PARAM_BINARY_EXPRESSION_TYPE,
+												Value:         "-",
+												StartPosition: 25,
+												EndPosition:   25,
+											},
+										},
+										Body: []*ast_node.ASTNode{
+											{
+												Code: ast_node.AST_NODE_CODE_NUMBER,
+												Params: []ast_node.ASTNodeParam{
+													{
+														Name:          ast_node.AST_PARAM_NUMBER_VALUE,
+														Value:         "9",
+														StartPosition: 23,
+														EndPosition:   23,
+													},
+												},
+												StartPosition: 23,
+												EndPosition:   23,
+											},
+											{
+												Code: ast_node.AST_NODE_CODE_NUMBER,
+												Params: []ast_node.ASTNodeParam{
+													{
+														Name:          ast_node.AST_PARAM_NUMBER_VALUE,
+														Value:         "3",
+														StartPosition: 27,
+														EndPosition:   27,
+													},
+												},
+												StartPosition: 27,
+												EndPosition:   27,
+											},
+										},
+										StartPosition: 25,
+										EndPosition:   25,
+									},
+								},
+								StartPosition: 22,
+								EndPosition:   28,
+							},
+						},
+						StartPosition: 20,
+						EndPosition:   20,
+					},
+				},
+				StartPosition: 7,
+				EndPosition:   7,
+			},
+		},
+	}
+
+	var diff = compareAst(ast, &expectedAst)
+
+	if len(diff) > 0 {
+		t.Errorf("Different AST")
+		t.Errorf("Message: %s", diff)
+	}
+
+	if err != nil {
+		t.Errorf("Should parse without errors")
+		t.Errorf("Failed with message: %s", err.Error())
+	}
+}
+
 func compareAst(first *ast_node.ASTNode, second *ast_node.ASTNode) string {
 	return compareNodes(first, second)
 }
