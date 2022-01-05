@@ -780,6 +780,131 @@ func TestTwoParenthesizedExpression(t *testing.T) {
 	}
 }
 
+func TestFunctionDeclaration(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `
+		function baz() {
+			const a = 1;
+			b = 2;
+		};
+	`
+
+	var parser = CreateParser(src)
+	var ast, err = parser.Parse(false)
+
+	var expectedAst = ast_node.ASTNode{
+		Code: ast_node.AST_NODE_CODE_ROOT,
+		Body: []*ast_node.ASTNode{
+			{
+				Code: ast_node.AST_NODE_CODE_FUNCTION,
+				Params: []ast_node.ASTNodeParam{
+					{
+						Name:          ast_node.AST_PARAM_FUNCTION_NAME,
+						Value:         "baz",
+						StartPosition: 12,
+						EndPosition:   14,
+					},
+				},
+				Body: []*ast_node.ASTNode{
+					{
+						Code: ast_node.AST_NODE_CODE_VARIABLE_DECLARATION,
+						Params: []ast_node.ASTNodeParam{
+							{
+								Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+								Value:         "a",
+								StartPosition: 29,
+								EndPosition:   29,
+							},
+						},
+						StartPosition: 23,
+						EndPosition:   29,
+					},
+					{
+						Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
+						Body: []*ast_node.ASTNode{
+							{
+								Code: ast_node.AST_NODE_CODE_REFERENCE,
+								Params: []ast_node.ASTNodeParam{
+									{
+										Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+										Value:         "a",
+										StartPosition: 29,
+										EndPosition:   29,
+									},
+								},
+								StartPosition: 29,
+								EndPosition:   29,
+							},
+							{
+								Code: ast_node.AST_NODE_CODE_NUMBER,
+								Params: []ast_node.ASTNodeParam{
+									{
+										Name:          ast_node.AST_PARAM_NUMBER_VALUE,
+										Value:         "1",
+										StartPosition: 33,
+										EndPosition:   33,
+									},
+								},
+								StartPosition: 33,
+								EndPosition:   33,
+							},
+						},
+						StartPosition: 31,
+						EndPosition:   31,
+					},
+					{
+						Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
+						Body: []*ast_node.ASTNode{
+							{
+								Code: ast_node.AST_NODE_CODE_REFERENCE,
+								Params: []ast_node.ASTNodeParam{
+									{
+										Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+										Value:         "b",
+										StartPosition: 39,
+										EndPosition:   39,
+									},
+								},
+								StartPosition: 39,
+								EndPosition:   39,
+							},
+							{
+								Code: ast_node.AST_NODE_CODE_NUMBER,
+								Params: []ast_node.ASTNodeParam{
+									{
+										Name:          ast_node.AST_PARAM_NUMBER_VALUE,
+										Value:         "2",
+										StartPosition: 43,
+										EndPosition:   43,
+									},
+								},
+								StartPosition: 43,
+								EndPosition:   43,
+							},
+						},
+						StartPosition: 41,
+						EndPosition:   41,
+					},
+				},
+				StartPosition: 3,
+				EndPosition:   48,
+			},
+		},
+	}
+
+	var diff = compareAst(ast, &expectedAst)
+
+	if len(diff) > 0 {
+		t.Errorf("Different AST")
+		t.Errorf("Message: %s", diff)
+	}
+
+	if err != nil {
+		t.Errorf("Should parse without errors")
+		t.Errorf("Failed with message: %s", err.Error())
+	}
+}
+
 func compareAst(first *ast_node.ASTNode, second *ast_node.ASTNode) string {
 	return compareNodes(first, second)
 }

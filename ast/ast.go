@@ -8,6 +8,7 @@ import (
 	"github.com/VadimZvf/golang/ast_token_stream"
 	"github.com/VadimZvf/golang/parser_error"
 	"github.com/VadimZvf/golang/token"
+	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_keyword"
 	"github.com/VadimZvf/golang/token_number"
 	"github.com/VadimZvf/golang/token_string"
@@ -60,6 +61,9 @@ func getNodes(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFact
 
 	case token_keyword.KEY_WORD:
 		return processKeyWord(stream, factory)
+
+	case token_function_declaration.FUNCTION_DECLARATION:
+		return processFunction(stream, factory)
 
 	case token.OPEN_EXPRESSION:
 		return processParenthesizedExpression(stream, factory)
@@ -391,6 +395,60 @@ func processParenthesizedExpression(stream *ast_token_stream.TokenStream, factor
 	}
 
 	return []*ast_node.ASTNode{&parenthesizedExpressionNode}, nil
+}
+
+func processFunction(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at function processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var functionNode = ast_node.CreateNode(currentToken)
+	stream.MoveNext()
+
+	var nextToken, isEndNext = stream.Look()
+
+	if isEndNext {
+		return []*ast_node.ASTNode{&functionNode}, parser_error.ParserError{
+			Message:       "Unexpected file end. Function should have body",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	if nextToken.Code != token.OPEN_BLOCK {
+		return []*ast_node.ASTNode{&functionNode}, parser_error.ParserError{
+			Message:       "Function should have body",
+			StartPosition: nextToken.StartPosition,
+			EndPosition:   nextToken.EndPosition,
+		}
+	}
+
+	stream.MoveNext()
+	nextToken, isEndNext = stream.Look()
+
+	for !isEndNext && nextToken.Code != token.CLOSE_BLOCK {
+		var bodyNodes, bodyNodeParsingError = getNodes(stream, factory)
+
+		if bodyNodeParsingError != nil {
+			return []*ast_node.ASTNode{&functionNode}, mergeParserErrors(parser_error.ParserError{
+				Message: "Failed parsing in function body",
+			}, bodyNodeParsingError)
+		}
+
+		appendNodes(&functionNode, bodyNodes)
+		stream.MoveNext()
+		nextToken, isEndNext = stream.Look()
+	}
+
+	functionNode.EndPosition = nextToken.EndPosition
+
+	return []*ast_node.ASTNode{&functionNode}, nil
 }
 
 // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
