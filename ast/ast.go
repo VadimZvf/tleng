@@ -11,6 +11,7 @@ import (
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_keyword"
 	"github.com/VadimZvf/golang/token_number"
+	"github.com/VadimZvf/golang/token_return"
 	"github.com/VadimZvf/golang/token_string"
 	"github.com/VadimZvf/golang/token_variable_declaration"
 )
@@ -64,6 +65,9 @@ func getNodes(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFact
 
 	case token_function_declaration.FUNCTION_DECLARATION:
 		return processFunction(stream, factory)
+
+	case token_return.RETURN_DECLARATION:
+		return processReturn(stream, factory)
 
 	case token.OPEN_EXPRESSION:
 		return processParenthesizedExpression(stream, factory)
@@ -449,6 +453,41 @@ func processFunction(stream *ast_token_stream.TokenStream, factory *ast_factory.
 	functionNode.EndPosition = nextToken.EndPosition
 
 	return []*ast_node.ASTNode{&functionNode}, nil
+}
+
+func processReturn(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at return processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var returnNode = ast_node.CreateNode(currentToken)
+	stream.MoveNext()
+
+	var valueNodes, valueNodeError = getNodes(stream, factory)
+
+	if valueNodeError != nil {
+		return []*ast_node.ASTNode{&returnNode}, mergeParserErrors(parser_error.ParserError{
+			Message: "Failed parse value node of return declaration",
+		}, valueNodeError)
+	}
+
+	if len(valueNodes) != 1 {
+		return []*ast_node.ASTNode{&returnNode}, parser_error.ParserError{
+			Message:       "Parsing error. Return declaration should have only one value node. But received: " + fmt.Sprint(len(valueNodes)),
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	appendNodes(&returnNode, valueNodes)
+
+	return []*ast_node.ASTNode{&returnNode}, nil
 }
 
 // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
