@@ -1173,6 +1173,200 @@ func TestReadTwoProperties(t *testing.T) {
 	}
 }
 
+func TestCallFunction(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `
+		a()
+	`
+
+	var parser = CreateParser(src)
+	var ast, err = parser.Parse(false)
+
+	var expectedAst = ast_node.ASTNode{
+		Code: ast_node.AST_NODE_CODE_ROOT,
+		Body: []*ast_node.ASTNode{
+			{
+				Code: ast_node.AST_NODE_CODE_CALL_EXPRESSION,
+				Body: []*ast_node.ASTNode{
+					{
+						Code: ast_node.AST_NODE_CODE_REFERENCE,
+						Params: []ast_node.ASTNodeParam{
+							{
+								Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+								Value:         "a",
+								StartPosition: 3,
+								EndPosition:   3,
+							},
+						},
+						StartPosition: 3,
+						EndPosition:   3,
+					},
+				},
+				StartPosition: 4,
+				EndPosition:   5,
+			},
+		},
+	}
+
+	var diff = compareAst(ast, &expectedAst)
+
+	if len(diff) > 0 {
+		t.Errorf("Different AST")
+		t.Errorf("Message: %s", diff)
+	}
+
+	if err != nil {
+		t.Errorf("Should parse without errors")
+		t.Errorf("Failed with message: %s", err.Error())
+	}
+}
+
+func TestCallFunctionWithProperty(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `
+		bar.baz()
+	`
+
+	var parser = CreateParser(src)
+	var ast, err = parser.Parse(false)
+
+	var expectedAst = ast_node.ASTNode{
+		Code: ast_node.AST_NODE_CODE_ROOT,
+		Body: []*ast_node.ASTNode{
+			{
+				Code: ast_node.AST_NODE_CODE_CALL_EXPRESSION,
+				Body: []*ast_node.ASTNode{
+					{
+						Code: ast_node.AST_NODE_CODE_READ_PROP,
+						Params: []ast_node.ASTNodeParam{
+							{
+								Name:          ast_node.AST_PARAM_PROPERTY_NAME,
+								Value:         "baz",
+								StartPosition: 7,
+								EndPosition:   9,
+							},
+						},
+						Body: []*ast_node.ASTNode{
+							{
+								Code: ast_node.AST_NODE_CODE_REFERENCE,
+								Params: []ast_node.ASTNodeParam{
+									{
+										Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+										Value:         "bar",
+										StartPosition: 3,
+										EndPosition:   5,
+									},
+								},
+								StartPosition: 3,
+								EndPosition:   5,
+							},
+						},
+						StartPosition: 6,
+						EndPosition:   6,
+					},
+				},
+				StartPosition: 10,
+				EndPosition:   11,
+			},
+		},
+	}
+
+	var diff = compareAst(ast, &expectedAst)
+
+	if len(diff) > 0 {
+		t.Errorf("Different AST")
+		t.Errorf("Message: %s", diff)
+	}
+
+	if err != nil {
+		t.Errorf("Should parse without errors")
+		t.Errorf("Failed with message: %s", err.Error())
+	}
+}
+
+func TestCallFunctionWithArguments(t *testing.T) {
+	var src = source_mock.GetSourceMock()
+	src.FullText = `
+		baz(bar(), "foo")
+	`
+
+	var parser = CreateParser(src)
+	var ast, err = parser.Parse(false)
+
+	var expectedAst = ast_node.ASTNode{
+		Code: ast_node.AST_NODE_CODE_ROOT,
+		Body: []*ast_node.ASTNode{
+			{
+				Code: ast_node.AST_NODE_CODE_CALL_EXPRESSION,
+				Body: []*ast_node.ASTNode{
+					{
+						Code: ast_node.AST_NODE_CODE_REFERENCE,
+						Params: []ast_node.ASTNodeParam{
+							{
+								Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+								Value:         "baz",
+								StartPosition: 3,
+								EndPosition:   5,
+							},
+						},
+						StartPosition: 3,
+						EndPosition:   5,
+					},
+				},
+				Arguments: []*ast_node.ASTNode{
+					{
+						Code: ast_node.AST_NODE_CODE_CALL_EXPRESSION,
+						Body: []*ast_node.ASTNode{
+							{
+								Code: ast_node.AST_NODE_CODE_REFERENCE,
+								Params: []ast_node.ASTNodeParam{
+									{
+										Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+										Value:         "bar",
+										StartPosition: 7,
+										EndPosition:   9,
+									},
+								},
+								StartPosition: 7,
+								EndPosition:   9,
+							},
+						},
+						StartPosition: 10,
+						EndPosition:   11,
+					},
+					{
+						Code: ast_node.AST_NODE_CODE_STRING,
+						Params: []ast_node.ASTNodeParam{
+							{
+								Name:          ast_node.AST_PARAM_STRING_VALUE,
+								Value:         "foo",
+								StartPosition: 14,
+								EndPosition:   18,
+							},
+						},
+						StartPosition: 14,
+						EndPosition:   18,
+					},
+				},
+				StartPosition: 6,
+				EndPosition:   19,
+			},
+		},
+	}
+
+	var diff = compareAst(ast, &expectedAst)
+
+	if len(diff) > 0 {
+		t.Errorf("Different AST")
+		t.Errorf("Message: %s", diff)
+	}
+
+	if err != nil {
+		t.Errorf("Should parse without errors")
+		t.Errorf("Failed with message: %s", err.Error())
+	}
+}
+
 func compareAst(first *ast_node.ASTNode, second *ast_node.ASTNode) string {
 	return compareNodes(first, second)
 }

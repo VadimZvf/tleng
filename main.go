@@ -25,25 +25,40 @@ func main() {
 		os.Exit(1)
 	}
 
-	printASTNode(astRoot, 0)
+	printASTNode(astRoot, 0, false)
 }
 
-func printASTNode(node *ast_node.ASTNode, depth int) {
+func printASTNode(node *ast_node.ASTNode, depth int, isArgument bool) {
 	for i := 0; i < depth; i++ {
-		fmt.Printf("    ")
+		if isArgument {
+			if i == 0 {
+				fmt.Printf("ARG..")
+			} else {
+				fmt.Printf(".....")
+			}
+		} else {
+			fmt.Printf("|    ")
+		}
 	}
+
 	fmt.Printf("Code: %s ", node.Code)
-	fmt.Println("Params:", node.Params)
+	if len(node.Params) > 0 {
+		fmt.Printf("Params: ")
+		for _, param := range node.Params {
+			fmt.Printf("%s=\"%s\" ", param.Name, param.Value)
+		}
+	}
+	fmt.Printf("\n")
 
 	if len(node.Body) > 0 {
 		for _, child := range node.Body {
-			printASTNode(child, depth+1)
+			printASTNode(child, depth+1, false)
 		}
 	}
 
 	if len(node.Arguments) > 0 {
-		for _, child := range node.Body {
-			printASTNode(child, depth+1)
+		for _, child := range node.Arguments {
+			printASTNode(child, depth+1, true)
 		}
 	}
 }

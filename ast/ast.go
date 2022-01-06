@@ -174,6 +174,10 @@ func processKeyWord(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, 
 	case token_read_property.READ_PROPERTY:
 		stream.MoveNext()
 		return processReadProperty(&referenceNode, stream)
+
+	case token.OPEN_EXPRESSION:
+		stream.MoveNext()
+		return processCallExpression(&referenceNode, stream)
 	}
 
 	return []*ast_node.ASTNode{&referenceNode}, nil
@@ -383,7 +387,7 @@ func processParenthesizedExpression(stream *ast_token_stream.TokenStream) ([]*as
 			}
 		}
 
-		return []*ast_node.ASTNode{binaryExpressionNodes[0]}, nil
+		return binaryExpressionNodes, nil
 	}
 
 	return []*ast_node.ASTNode{&parenthesizedExpressionNode}, nil
@@ -530,9 +534,109 @@ func processReadProperty(leftNode *ast_node.ASTNode, stream *ast_token_stream.To
 	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
 		stream.MoveNext()
 		return processBinaryExpression(&nextReadPropetryNode, stream)
+
+	case token.OPEN_EXPRESSION:
+		stream.MoveNext()
+		return processCallExpression(&nextReadPropetryNode, stream)
 	}
 
 	return []*ast_node.ASTNode{&nextReadPropetryNode}, nil
+}
+
+func processCallExpression(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{leftNode}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at call expression processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var callNode = ast_node.ASTNode{
+		Code:          ast_node.AST_NODE_CODE_CALL_EXPRESSION,
+		StartPosition: currentToken.StartPosition,
+		EndPosition:   currentToken.EndPosition,
+		Body:          []*ast_node.ASTNode{leftNode},
+	}
+
+	stream.MoveNext()
+
+	var arguments, argumentsParsingError = processCallExpressionArguments(stream)
+
+	callNode.Arguments = arguments
+
+	if argumentsParsingError != nil {
+		return []*ast_node.ASTNode{&callNode}, mergeParserErrors(parser_error.ParserError{
+			Message: "Something wrong at arguments call expression processing",
+		}, argumentsParsingError)
+	}
+
+	var endCallToken, isEndAtEndCall = stream.Look()
+
+	if isEndAtEndCall {
+		return []*ast_node.ASTNode{leftNode}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at call expression processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	if endCallToken.Code != token.CLOSE_EXPRESSION {
+		return []*ast_node.ASTNode{&callNode}, parser_error.ParserError{
+			Message:       "Unknow token. Expected end call expression. But received: " + endCallToken.Code,
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	callNode.EndPosition = endCallToken.EndPosition
+
+	return []*ast_node.ASTNode{&callNode}, nil
+}
+
+func processCallExpressionArguments(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+	var arguments = []*ast_node.ASTNode{}
+
+	for !isEnd && currentToken.Code != token.CLOSE_EXPRESSION {
+		var argument, argumentParsingError = getNodes(stream)
+
+		if argumentParsingError != nil {
+			return arguments, mergeParserErrors(parser_error.ParserError{
+				Message: "Something wrong at call argument processing",
+			}, argumentParsingError)
+		}
+
+		if len(argument) != 1 {
+			return arguments, parser_error.ParserError{
+				Message:       "Parsing error. Argument declaration should have only one value node. But received: " + fmt.Sprint(len(argument)),
+				StartPosition: currentToken.StartPosition,
+				EndPosition:   currentToken.EndPosition,
+			}
+		}
+
+		arguments = append(arguments, argument[0])
+
+		stream.MoveNext()
+		currentToken, isEnd = stream.Look()
+
+		if currentToken.Code != token.COMMA && currentToken.Code != token.CLOSE_EXPRESSION {
+			return arguments, parser_error.ParserError{
+				Message:       "Parsing error. Argument declarations should devided by comma. But received: " + currentToken.Code,
+				StartPosition: currentToken.StartPosition,
+				EndPosition:   currentToken.EndPosition,
+			}
+		}
+
+		if currentToken.Code == token.COMMA {
+			stream.MoveNext()
+			currentToken, isEnd = stream.Look()
+		}
+	}
+
+	return arguments, nil
 }
 
 // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓

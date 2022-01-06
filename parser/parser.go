@@ -72,17 +72,26 @@ func (parser *Parser) Parse(isDebug bool) (*ast_node.ASTNode, error) {
 		fmt.Printf("_____________________________________________\n\n")
 
 		if ast != nil {
-			printASTNode(ast, 0)
+			printASTNode(ast, 0, false)
 		}
 	}
 
 	return ast, astError
 }
 
-func printASTNode(node *ast_node.ASTNode, depth int) {
+func printASTNode(node *ast_node.ASTNode, depth int, isArgument bool) {
 	for i := 0; i < depth; i++ {
-		fmt.Printf("|    ")
+		if isArgument {
+			if i == 0 {
+				fmt.Printf("ARG..")
+			} else {
+				fmt.Printf(".....")
+			}
+		} else {
+			fmt.Printf("|    ")
+		}
 	}
+
 	fmt.Printf("Code: %s ", node.Code)
 	if len(node.Params) > 0 {
 		fmt.Printf("Params: ")
@@ -94,13 +103,13 @@ func printASTNode(node *ast_node.ASTNode, depth int) {
 
 	if len(node.Body) > 0 {
 		for _, child := range node.Body {
-			printASTNode(child, depth+1)
+			printASTNode(child, depth+1, false)
 		}
 	}
 
 	if len(node.Arguments) > 0 {
-		for _, child := range node.Body {
-			printASTNode(child, depth+1)
+		for _, child := range node.Arguments {
+			printASTNode(child, depth+1, true)
 		}
 	}
 }
