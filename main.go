@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/parser"
+	"github.com/VadimZvf/golang/runtime"
+	"github.com/VadimZvf/golang/runtime_bridge_cli"
 	"github.com/VadimZvf/golang/source_file"
 )
 
@@ -25,40 +26,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	printASTNode(astRoot, 0, false)
-}
+	var bridge = runtime_bridge_cli.CreateBridge()
+	var rt = runtime.CreateRuntime(&bridge, true)
+	var runtimeErr = rt.Run(astRoot)
 
-func printASTNode(node *ast_node.ASTNode, depth int, isArgument bool) {
-	for i := 0; i < depth; i++ {
-		if isArgument {
-			if i == 0 {
-				fmt.Printf("ARG..")
-			} else {
-				fmt.Printf(".....")
-			}
-		} else {
-			fmt.Printf("|    ")
-		}
-	}
-
-	fmt.Printf("Code: %s ", node.Code)
-	if len(node.Params) > 0 {
-		fmt.Printf("Params: ")
-		for _, param := range node.Params {
-			fmt.Printf("%s=\"%s\" ", param.Name, param.Value)
-		}
-	}
-	fmt.Printf("\n")
-
-	if len(node.Body) > 0 {
-		for _, child := range node.Body {
-			printASTNode(child, depth+1, false)
-		}
-	}
-
-	if len(node.Arguments) > 0 {
-		for _, child := range node.Arguments {
-			printASTNode(child, depth+1, true)
-		}
+	if runtimeErr != nil {
+		fmt.Println(runtimeErr)
 	}
 }

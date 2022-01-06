@@ -51,14 +51,30 @@ const AST_PARAM_STRING_VALUE = "STRING_VALUE"
 const AST_PARAM_BINARY_EXPRESSION_TYPE = "BINARY_EXPRESSION_TYPE"
 const AST_PARAM_PROPERTY_NAME = "PROPERTY_NAME"
 
-func GetVariableNameParam(node *ASTNode) ASTNodeParam {
+func GetVariableNameParam(node *ASTNode) *ASTNodeParam {
+	return GetParam(node, AST_PARAM_VARIABLE_NAME)
+}
+
+func GetNumberValueParam(node *ASTNode) *ASTNodeParam {
+	return GetParam(node, AST_PARAM_NUMBER_VALUE)
+}
+
+func GetStringValueParam(node *ASTNode) *ASTNodeParam {
+	return GetParam(node, AST_PARAM_STRING_VALUE)
+}
+
+func GetBinaryExpressionTypeParam(node *ASTNode) *ASTNodeParam {
+	return GetParam(node, AST_PARAM_BINARY_EXPRESSION_TYPE)
+}
+
+func GetParam(node *ASTNode, paramCode string) *ASTNodeParam {
 	for _, param := range node.Params {
-		if param.Name == AST_PARAM_VARIABLE_NAME {
-			return param
+		if param.Name == paramCode {
+			return &param
 		}
 	}
 
-	return ASTNodeParam{}
+	return nil
 }
 
 func CreateNode(currentToken token.Token) ASTNode {

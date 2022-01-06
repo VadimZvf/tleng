@@ -70,10 +70,10 @@ func (parser *Parser) Parse(isDebug bool) (*ast_node.ASTNode, error) {
 		fmt.Printf("_____________________________________________\n")
 		parser_error_printer.PrintError(&buffer, &std, astError)
 		fmt.Printf("_____________________________________________\n\n")
+	}
 
-		if ast != nil {
-			printASTNode(ast, 0, false)
-		}
+	if isDebug && ast != nil {
+		printASTNode(ast, 0, false)
 	}
 
 	return ast, astError
