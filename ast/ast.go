@@ -3,7 +3,6 @@ package ast
 import (
 	"fmt"
 
-	"github.com/VadimZvf/golang/ast_factory"
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/ast_token_stream"
 	"github.com/VadimZvf/golang/parser_error"
@@ -11,6 +10,7 @@ import (
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_keyword"
 	"github.com/VadimZvf/golang/token_number"
+	"github.com/VadimZvf/golang/token_read_property"
 	"github.com/VadimZvf/golang/token_return"
 	"github.com/VadimZvf/golang/token_string"
 	"github.com/VadimZvf/golang/token_variable_declaration"
@@ -19,27 +19,29 @@ import (
 func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	var tokenStream = ast_token_stream.CreateTokenStream(tokens)
 	var _, isEnd = tokenStream.Look()
-	var factory = ast_factory.CreateASTFactory()
+	var ast = ast_node.ASTNode{
+		Code: ast_node.AST_NODE_CODE_ROOT,
+	}
 
 	for !isEnd {
-		var nodes, err = getNodes(&tokenStream, &factory)
+		var nodes, err = getNodes(&tokenStream)
 
 		for _, node := range nodes {
-			factory.Append(node)
+			appendNode(&ast, node)
 		}
 
 		if err != nil {
-			return factory.GetAST(), err
+			return &ast, err
 		}
 
 		tokenStream.MoveNext()
 		_, isEnd = tokenStream.Look()
 	}
 
-	return factory.GetAST(), nil
+	return &ast, nil
 }
 
-func getNodes(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -52,25 +54,25 @@ func getNodes(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFact
 
 	switch currentToken.Code {
 	case token_variable_declaration.VARIABLE_DECLARAION:
-		return processVariableDeclaration(stream, factory)
+		return processVariableDeclaration(stream)
 
 	case token_number.NUMBER:
-		return processNumber(stream, factory)
+		return processNumber(stream)
 
 	case token_string.STRING:
-		return processString(stream, factory)
+		return processString(stream)
 
 	case token_keyword.KEY_WORD:
-		return processKeyWord(stream, factory)
+		return processKeyWord(stream)
 
 	case token_function_declaration.FUNCTION_DECLARATION:
-		return processFunction(stream, factory)
+		return processFunction(stream)
 
 	case token_return.RETURN_DECLARATION:
-		return processReturn(stream, factory)
+		return processReturn(stream)
 
 	case token.OPEN_EXPRESSION:
-		return processParenthesizedExpression(stream, factory)
+		return processParenthesizedExpression(stream)
 
 	case token.END_LINE:
 		return []*ast_node.ASTNode{}, nil
@@ -83,7 +85,7 @@ func getNodes(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFact
 	}
 }
 
-func processVariableDeclaration(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func processVariableDeclaration(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -119,7 +121,7 @@ func processVariableDeclaration(stream *ast_token_stream.TokenStream, factory *a
 
 		stream.MoveNext()
 
-		var assignmentNodes, assignmentNodeParsingError = processAssignment(&referenceNode, stream, factory)
+		var assignmentNodes, assignmentNodeParsingError = processAssignment(&referenceNode, stream)
 
 		if assignmentNodeParsingError != nil {
 			return []*ast_node.ASTNode{&variableDeclarationNode}, mergeParserErrors(parser_error.ParserError{
@@ -141,7 +143,7 @@ func processVariableDeclaration(stream *ast_token_stream.TokenStream, factory *a
 	return []*ast_node.ASTNode{&variableDeclarationNode}, nil
 }
 
-func processKeyWord(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func processKeyWord(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -163,34 +165,21 @@ func processKeyWord(stream *ast_token_stream.TokenStream, factory *ast_factory.A
 	switch nextToken.Code {
 	case token.ASSIGNMENT:
 		stream.MoveNext()
-
-		var assignmentNodes, assignmentNodeParsingError = processAssignment(&referenceNode, stream, factory)
-
-		if assignmentNodeParsingError != nil {
-			return []*ast_node.ASTNode{&referenceNode}, mergeParserErrors(parser_error.ParserError{
-				Message: "Parsing error. At assignment with variable declaration",
-			}, assignmentNodeParsingError)
-		}
-
-		if len(assignmentNodes) != 1 {
-			return []*ast_node.ASTNode{&referenceNode}, parser_error.ParserError{
-				Message:       "Parsing error. Should assign only one node. But received: " + fmt.Sprint(len(assignmentNodes)),
-				StartPosition: currentToken.StartPosition,
-				EndPosition:   currentToken.EndPosition,
-			}
-		}
-
-		return []*ast_node.ASTNode{assignmentNodes[0]}, nil
+		return processAssignment(&referenceNode, stream)
 
 	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
 		stream.MoveNext()
-		return processBinaryExpression(&referenceNode, stream, factory)
+		return processBinaryExpression(&referenceNode, stream)
+
+	case token_read_property.READ_PROPERTY:
+		stream.MoveNext()
+		return processReadProperty(&referenceNode, stream)
 	}
 
 	return []*ast_node.ASTNode{&referenceNode}, nil
 }
 
-func processNumber(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func processNumber(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -212,13 +201,13 @@ func processNumber(stream *ast_token_stream.TokenStream, factory *ast_factory.AS
 	switch nextToken.Code {
 	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
 		stream.MoveNext()
-		return processBinaryExpression(&numberNode, stream, factory)
+		return processBinaryExpression(&numberNode, stream)
 	}
 
 	return []*ast_node.ASTNode{&numberNode}, nil
 }
 
-func processString(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func processString(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -240,13 +229,13 @@ func processString(stream *ast_token_stream.TokenStream, factory *ast_factory.AS
 	switch nextToken.Code {
 	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
 		stream.MoveNext()
-		return processBinaryExpression(&stringNode, stream, factory)
+		return processBinaryExpression(&stringNode, stream)
 	}
 
 	return []*ast_node.ASTNode{&stringNode}, nil
 }
 
-func processAssignment(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func processAssignment(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -261,7 +250,7 @@ func processAssignment(leftNode *ast_node.ASTNode, stream *ast_token_stream.Toke
 
 	stream.MoveNext()
 
-	var rightNodes, rightNodesParsingError = getNodes(stream, factory)
+	var rightNodes, rightNodesParsingError = getNodes(stream)
 
 	if rightNodesParsingError != nil {
 		return []*ast_node.ASTNode{leftNode}, mergeParserErrors(parser_error.ParserError{
@@ -283,7 +272,7 @@ func processAssignment(leftNode *ast_node.ASTNode, stream *ast_token_stream.Toke
 	return []*ast_node.ASTNode{&assignmentNode}, nil
 }
 
-func processBinaryExpression(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func processBinaryExpression(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -296,7 +285,7 @@ func processBinaryExpression(leftNode *ast_node.ASTNode, stream *ast_token_strea
 
 	var binaryNode = ast_node.CreateNode(currentToken)
 	stream.MoveNext()
-	var rightNodes, rightNodeError = getNodes(stream, factory)
+	var rightNodes, rightNodeError = getNodes(stream)
 
 	if rightNodeError != nil {
 		return []*ast_node.ASTNode{leftNode}, mergeParserErrors(parser_error.ParserError{
@@ -320,7 +309,7 @@ func processBinaryExpression(leftNode *ast_node.ASTNode, stream *ast_token_strea
 	return []*ast_node.ASTNode{&binaryNode}, nil
 }
 
-func processParenthesizedExpression(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func processParenthesizedExpression(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -333,7 +322,7 @@ func processParenthesizedExpression(stream *ast_token_stream.TokenStream, factor
 
 	var parenthesizedExpressionNode = ast_node.CreateNode(currentToken)
 	stream.MoveNext()
-	var valueNodes, valueNodeError = getNodes(stream, factory)
+	var valueNodes, valueNodeError = getNodes(stream)
 
 	if valueNodeError != nil {
 		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, mergeParserErrors(parser_error.ParserError{
@@ -378,7 +367,7 @@ func processParenthesizedExpression(stream *ast_token_stream.TokenStream, factor
 	switch nextToken.Code {
 	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
 		stream.MoveNext()
-		var binaryExpressionNodes, binaryExpressionNodeError = processBinaryExpression(&parenthesizedExpressionNode, stream, factory)
+		var binaryExpressionNodes, binaryExpressionNodeError = processBinaryExpression(&parenthesizedExpressionNode, stream)
 
 		if binaryExpressionNodeError != nil {
 			return []*ast_node.ASTNode{&parenthesizedExpressionNode}, mergeParserErrors(parser_error.ParserError{
@@ -395,13 +384,12 @@ func processParenthesizedExpression(stream *ast_token_stream.TokenStream, factor
 		}
 
 		return []*ast_node.ASTNode{binaryExpressionNodes[0]}, nil
-
 	}
 
 	return []*ast_node.ASTNode{&parenthesizedExpressionNode}, nil
 }
 
-func processFunction(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func processFunction(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -437,7 +425,7 @@ func processFunction(stream *ast_token_stream.TokenStream, factory *ast_factory.
 	nextToken, isEndNext = stream.Look()
 
 	for !isEndNext && nextToken.Code != token.CLOSE_BLOCK {
-		var bodyNodes, bodyNodeParsingError = getNodes(stream, factory)
+		var bodyNodes, bodyNodeParsingError = getNodes(stream)
 
 		if bodyNodeParsingError != nil {
 			return []*ast_node.ASTNode{&functionNode}, mergeParserErrors(parser_error.ParserError{
@@ -455,7 +443,7 @@ func processFunction(stream *ast_token_stream.TokenStream, factory *ast_factory.
 	return []*ast_node.ASTNode{&functionNode}, nil
 }
 
-func processReturn(stream *ast_token_stream.TokenStream, factory *ast_factory.ASTFactory) ([]*ast_node.ASTNode, error) {
+func processReturn(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -469,7 +457,7 @@ func processReturn(stream *ast_token_stream.TokenStream, factory *ast_factory.AS
 	var returnNode = ast_node.CreateNode(currentToken)
 	stream.MoveNext()
 
-	var valueNodes, valueNodeError = getNodes(stream, factory)
+	var valueNodes, valueNodeError = getNodes(stream)
 
 	if valueNodeError != nil {
 		return []*ast_node.ASTNode{&returnNode}, mergeParserErrors(parser_error.ParserError{
@@ -488,6 +476,63 @@ func processReturn(stream *ast_token_stream.TokenStream, factory *ast_factory.AS
 	appendNodes(&returnNode, valueNodes)
 
 	return []*ast_node.ASTNode{&returnNode}, nil
+}
+
+func processReadProperty(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+	var currentToken, isEnd = stream.Look()
+
+	if isEnd {
+		return []*ast_node.ASTNode{leftNode}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at read property expression processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	var nextReadPropetryNode = ast_node.CreateNode(currentToken)
+	appendNode(&nextReadPropetryNode, leftNode)
+
+	stream.MoveNext()
+	var propertyToken, isEndAtProperty = stream.Look()
+
+	if isEndAtProperty {
+		return []*ast_node.ASTNode{leftNode}, parser_error.ParserError{
+			Message:       "Unexpected file end. Something wrong internal at read property expression processing",
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+	}
+
+	nextReadPropetryNode.Params = []ast_node.ASTNodeParam{
+		{
+			Name:          ast_node.AST_PARAM_PROPERTY_NAME,
+			Value:         propertyToken.Value,
+			StartPosition: propertyToken.StartPosition,
+			EndPosition:   propertyToken.EndPosition,
+		},
+	}
+
+	var nextToken, isEndNext = stream.LookNext()
+
+	if isEndNext {
+		return []*ast_node.ASTNode{&nextReadPropetryNode}, nil
+	}
+
+	switch nextToken.Code {
+	case token_read_property.READ_PROPERTY:
+		stream.MoveNext()
+		return processReadProperty(&nextReadPropetryNode, stream)
+
+	case token.ASSIGNMENT:
+		stream.MoveNext()
+		return processAssignment(&nextReadPropetryNode, stream)
+
+	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
+		stream.MoveNext()
+		return processBinaryExpression(&nextReadPropetryNode, stream)
+	}
+
+	return []*ast_node.ASTNode{&nextReadPropetryNode}, nil
 }
 
 // ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
