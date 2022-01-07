@@ -11,7 +11,7 @@ import (
 func TestVariableDeclaration(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `
-		const a;
+		var a;
 	`
 
 	var parser = CreateParser(src)
@@ -26,12 +26,12 @@ func TestVariableDeclaration(t *testing.T) {
 					{
 						Name:          ast_node.AST_PARAM_VARIABLE_NAME,
 						Value:         "a",
-						StartPosition: 9,
-						EndPosition:   9,
+						StartPosition: 7,
+						EndPosition:   7,
 					},
 				},
 				StartPosition: 3,
-				EndPosition:   9,
+				EndPosition:   7,
 			},
 		},
 	}
@@ -52,7 +52,7 @@ func TestVariableDeclaration(t *testing.T) {
 func TestNumberVariable(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `
-		const a = 12;
+		var a = 12;
 	`
 
 	var parser = CreateParser(src)
@@ -67,12 +67,12 @@ func TestNumberVariable(t *testing.T) {
 					{
 						Name:          ast_node.AST_PARAM_VARIABLE_NAME,
 						Value:         "a",
-						StartPosition: 9,
-						EndPosition:   9,
+						StartPosition: 7,
+						EndPosition:   7,
 					},
 				},
 				StartPosition: 3,
-				EndPosition:   9,
+				EndPosition:   7,
 			},
 			{
 				Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
@@ -83,12 +83,12 @@ func TestNumberVariable(t *testing.T) {
 							{
 								Name:          ast_node.AST_PARAM_VARIABLE_NAME,
 								Value:         "a",
-								StartPosition: 9,
-								EndPosition:   9,
+								StartPosition: 7,
+								EndPosition:   7,
 							},
 						},
-						StartPosition: 9,
-						EndPosition:   9,
+						StartPosition: 7,
+						EndPosition:   7,
 					},
 					{
 						Code: ast_node.AST_NODE_CODE_NUMBER,
@@ -96,16 +96,16 @@ func TestNumberVariable(t *testing.T) {
 							{
 								Name:          ast_node.AST_PARAM_NUMBER_VALUE,
 								Value:         "12",
-								StartPosition: 13,
-								EndPosition:   14,
+								StartPosition: 11,
+								EndPosition:   12,
 							},
 						},
-						StartPosition: 13,
-						EndPosition:   14,
+						StartPosition: 11,
+						EndPosition:   12,
 					},
 				},
-				StartPosition: 11,
-				EndPosition:   11,
+				StartPosition: 9,
+				EndPosition:   9,
 			},
 		},
 	}
@@ -126,7 +126,7 @@ func TestNumberVariable(t *testing.T) {
 func TestStringVariable(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `
-		const foo = "Hello World!";
+		var foo = "Hello World!";
 	`
 
 	var parser = CreateParser(src)
@@ -141,12 +141,12 @@ func TestStringVariable(t *testing.T) {
 					{
 						Name:          ast_node.AST_PARAM_VARIABLE_NAME,
 						Value:         "foo",
-						StartPosition: 9,
-						EndPosition:   11,
+						StartPosition: 7,
+						EndPosition:   9,
 					},
 				},
 				StartPosition: 3,
-				EndPosition:   11,
+				EndPosition:   9,
 			},
 			{
 				Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
@@ -157,12 +157,12 @@ func TestStringVariable(t *testing.T) {
 							{
 								Name:          ast_node.AST_PARAM_VARIABLE_NAME,
 								Value:         "foo",
-								StartPosition: 9,
-								EndPosition:   11,
+								StartPosition: 7,
+								EndPosition:   9,
 							},
 						},
-						StartPosition: 9,
-						EndPosition:   11,
+						StartPosition: 7,
+						EndPosition:   9,
 					},
 					{
 						Code: ast_node.AST_NODE_CODE_STRING,
@@ -170,16 +170,16 @@ func TestStringVariable(t *testing.T) {
 							{
 								Name:          ast_node.AST_PARAM_STRING_VALUE,
 								Value:         "Hello World!",
-								StartPosition: 15,
-								EndPosition:   28,
+								StartPosition: 13,
+								EndPosition:   26,
 							},
 						},
-						StartPosition: 15,
-						EndPosition:   28,
+						StartPosition: 13,
+						EndPosition:   26,
 					},
 				},
-				StartPosition: 13,
-				EndPosition:   13,
+				StartPosition: 11,
+				EndPosition:   11,
 			},
 		},
 	}
@@ -784,7 +784,7 @@ func TestFunctionDeclaration(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `
 		function baz() {
-			const a = 1;
+			var a = 1;
 			b = 2;
 		};
 	`
@@ -812,12 +812,12 @@ func TestFunctionDeclaration(t *testing.T) {
 							{
 								Name:          ast_node.AST_PARAM_VARIABLE_NAME,
 								Value:         "a",
-								StartPosition: 29,
-								EndPosition:   29,
+								StartPosition: 27,
+								EndPosition:   27,
 							},
 						},
 						StartPosition: 23,
-						EndPosition:   29,
+						EndPosition:   27,
 					},
 					{
 						Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
@@ -828,12 +828,12 @@ func TestFunctionDeclaration(t *testing.T) {
 									{
 										Name:          ast_node.AST_PARAM_VARIABLE_NAME,
 										Value:         "a",
-										StartPosition: 29,
-										EndPosition:   29,
+										StartPosition: 27,
+										EndPosition:   27,
 									},
 								},
-								StartPosition: 29,
-								EndPosition:   29,
+								StartPosition: 27,
+								EndPosition:   27,
 							},
 							{
 								Code: ast_node.AST_NODE_CODE_NUMBER,
@@ -841,16 +841,16 @@ func TestFunctionDeclaration(t *testing.T) {
 									{
 										Name:          ast_node.AST_PARAM_NUMBER_VALUE,
 										Value:         "1",
-										StartPosition: 33,
-										EndPosition:   33,
+										StartPosition: 31,
+										EndPosition:   31,
 									},
 								},
-								StartPosition: 33,
-								EndPosition:   33,
+								StartPosition: 31,
+								EndPosition:   31,
 							},
 						},
-						StartPosition: 31,
-						EndPosition:   31,
+						StartPosition: 29,
+						EndPosition:   29,
 					},
 					{
 						Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
@@ -861,12 +861,12 @@ func TestFunctionDeclaration(t *testing.T) {
 									{
 										Name:          ast_node.AST_PARAM_VARIABLE_NAME,
 										Value:         "b",
-										StartPosition: 39,
-										EndPosition:   39,
+										StartPosition: 37,
+										EndPosition:   37,
 									},
 								},
-								StartPosition: 39,
-								EndPosition:   39,
+								StartPosition: 37,
+								EndPosition:   37,
 							},
 							{
 								Code: ast_node.AST_NODE_CODE_NUMBER,
@@ -874,20 +874,20 @@ func TestFunctionDeclaration(t *testing.T) {
 									{
 										Name:          ast_node.AST_PARAM_NUMBER_VALUE,
 										Value:         "2",
-										StartPosition: 43,
-										EndPosition:   43,
+										StartPosition: 41,
+										EndPosition:   41,
 									},
 								},
-								StartPosition: 43,
-								EndPosition:   43,
+								StartPosition: 41,
+								EndPosition:   41,
 							},
 						},
-						StartPosition: 41,
-						EndPosition:   41,
+						StartPosition: 39,
+						EndPosition:   39,
 					},
 				},
 				StartPosition: 3,
-				EndPosition:   48,
+				EndPosition:   46,
 			},
 		},
 	}

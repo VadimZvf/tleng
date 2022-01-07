@@ -1,14 +1,14 @@
-const a = 12;
+var a = 12;
 
-const c = (((23 / 2) + 23) / (32 - 2)) * 11;
+var c = (((23 / 2) + 23) / (32 - 2)) * 11;
 
 function func(d, c, w) {
-    const b = 33332;
+    var b = 33332;
 
     return "Hello world";
 }
 
-const foo = sdas + 2;
+var foo = sdas + 2;
 Wow = 123 - 3;
 
 console.log(func(), a);

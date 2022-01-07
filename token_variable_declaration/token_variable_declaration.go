@@ -9,7 +9,7 @@ var VARIABLE_DECLARAION = "VARIABLE_DECLARAION"
 var VariableDeclarationProcessor token.TokenProcessor = proccess
 
 var VARIABLE_NAME_PARAM = "NAME"
-var variableDeclorationName = "const"
+var variableDeclorationName = "var"
 
 func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 	if !buffer.IsStartsWith(variableDeclorationName + " ") {

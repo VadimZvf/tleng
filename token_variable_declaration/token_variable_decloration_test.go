@@ -12,7 +12,7 @@ import (
 
 func TestVariableShouldNotBeFound(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `cons t = "";`
+	src.FullText = `va r = "";`
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	token, isFound, _ := VariableDeclarationProcessor(&buffer)
@@ -28,7 +28,7 @@ func TestVariableShouldNotBeFound(t *testing.T) {
 
 func TestEmptyVariableDecloration(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `const a;`
+	src.FullText = `var a;`
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	foundToken, isFound, _ := VariableDeclarationProcessor(&buffer)
@@ -44,8 +44,8 @@ func TestEmptyVariableDecloration(t *testing.T) {
 	var variableNameParam = token.TokenParam{
 		Name:          "NAME",
 		Value:         "a",
-		StartPosition: 6,
-		EndPosition:   6,
+		StartPosition: 4,
+		EndPosition:   4,
 	}
 
 	if !containParam(foundToken.Params, variableNameParam) {
@@ -55,7 +55,7 @@ func TestEmptyVariableDecloration(t *testing.T) {
 
 func TestLongNameVariableDecloration(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `const wow_foo_bar;`
+	src.FullText = `var wow_foo_bar;`
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	foundToken, isFound, _ := VariableDeclarationProcessor(&buffer)
@@ -71,8 +71,8 @@ func TestLongNameVariableDecloration(t *testing.T) {
 	var argument3Param = token.TokenParam{
 		Name:          "NAME",
 		Value:         "wow_foo_bar",
-		StartPosition: 6,
-		EndPosition:   16,
+		StartPosition: 4,
+		EndPosition:   14,
 	}
 
 	if !containParam(foundToken.Params, argument3Param) {
@@ -82,7 +82,7 @@ func TestLongNameVariableDecloration(t *testing.T) {
 
 func TestErrorInvalidName(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `const 123foo`
+	src.FullText = `var 123foo`
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	_, _, err := VariableDeclarationProcessor(&buffer)
@@ -101,7 +101,7 @@ func TestErrorInvalidName(t *testing.T) {
 		t.Errorf("Should return variable name parsing error")
 	}
 
-	if re.StartPosition != 0 || re.EndPosition != 6 {
+	if re.StartPosition != 0 || re.EndPosition != 4 {
 		t.Errorf("Should return position of error. Recived start: %d, end: %d", re.StartPosition, re.EndPosition)
 	}
 }

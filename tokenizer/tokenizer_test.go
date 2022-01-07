@@ -17,7 +17,7 @@ import (
 func TestStringVariable(t *testing.T) {
 	var src = source_mock.GetSourceMock()
 	src.FullText = `
-		const a = "Hello world";
+		var a = "Hello world";
 	`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
@@ -27,7 +27,7 @@ func TestStringVariable(t *testing.T) {
 	if !isSameToken(tokens[0], token.Token{
 		Code:          token_variable_declaration.VARIABLE_DECLARAION,
 		StartPosition: 3,
-		EndPosition:   9,
+		EndPosition:   7,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -35,17 +35,17 @@ func TestStringVariable(t *testing.T) {
 	if !checkParam(tokens[0], token.TokenParam{
 		Name:          token_variable_declaration.VARIABLE_NAME_PARAM,
 		Value:         "a",
-		StartPosition: 9,
-		EndPosition:   9,
+		StartPosition: 7,
+		EndPosition:   7,
 	}) {
 		t.Errorf("Wrong param")
 	}
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.ASSIGNMENT,
-		Value: "=",
-		StartPosition: 11,
-		EndPosition:   11,
+		Value:         "=",
+		StartPosition: 9,
+		EndPosition:   9,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -53,8 +53,8 @@ func TestStringVariable(t *testing.T) {
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token_string.STRING,
 		Value:         "Hello world",
-		StartPosition: 13,
-		EndPosition:   25,
+		StartPosition: 11,
+		EndPosition:   23,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -97,7 +97,7 @@ func TestKeywordLikeFunctionDecloration(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.OPEN_EXPRESSION,
-		Value: "(",
+		Value:         "(",
 		StartPosition: 9,
 		EndPosition:   9,
 	}) {
@@ -106,7 +106,7 @@ func TestKeywordLikeFunctionDecloration(t *testing.T) {
 
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token.CLOSE_EXPRESSION,
-		Value: ")",
+		Value:         ")",
 		StartPosition: 10,
 		EndPosition:   10,
 	}) {
@@ -116,7 +116,7 @@ func TestKeywordLikeFunctionDecloration(t *testing.T) {
 
 func TestCopyVariableByLink(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `const a = b;`
+	src.FullText = `var a = b;`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
@@ -125,7 +125,7 @@ func TestCopyVariableByLink(t *testing.T) {
 	if !isSameToken(tokens[0], token.Token{
 		Code:          token_variable_declaration.VARIABLE_DECLARAION,
 		StartPosition: 0,
-		EndPosition:   6,
+		EndPosition:   4,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -133,17 +133,17 @@ func TestCopyVariableByLink(t *testing.T) {
 	if !checkParam(tokens[0], token.TokenParam{
 		Name:          token_variable_declaration.VARIABLE_NAME_PARAM,
 		Value:         "a",
-		StartPosition: 6,
-		EndPosition:   6,
+		StartPosition: 4,
+		EndPosition:   4,
 	}) {
 		t.Errorf("Wrong param")
 	}
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.ASSIGNMENT,
-		Value: "=",
-		StartPosition: 8,
-		EndPosition:   8,
+		Value:         "=",
+		StartPosition: 6,
+		EndPosition:   6,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -151,8 +151,8 @@ func TestCopyVariableByLink(t *testing.T) {
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token.KEY_WORD,
 		Value:         "b",
-		StartPosition: 10,
-		EndPosition:   10,
+		StartPosition: 8,
+		EndPosition:   8,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -160,7 +160,7 @@ func TestCopyVariableByLink(t *testing.T) {
 
 func TestVariableWithTokenName(t *testing.T) {
 	var src = source_mock.GetSourceMock()
-	src.FullText = `const functionA;`
+	src.FullText = `var functionA;`
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
@@ -169,7 +169,7 @@ func TestVariableWithTokenName(t *testing.T) {
 	if !isSameToken(tokens[0], token.Token{
 		Code:          token_variable_declaration.VARIABLE_DECLARAION,
 		StartPosition: 0,
-		EndPosition:   14,
+		EndPosition:   12,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -177,8 +177,8 @@ func TestVariableWithTokenName(t *testing.T) {
 	if !checkParam(tokens[0], token.TokenParam{
 		Name:          token_variable_declaration.VARIABLE_NAME_PARAM,
 		Value:         "functionA",
-		StartPosition: 6,
-		EndPosition:   14,
+		StartPosition: 4,
+		EndPosition:   12,
 	}) {
 		t.Errorf("Wrong param")
 	}
@@ -211,7 +211,7 @@ func TestFunctionDecloration(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.OPEN_BLOCK,
-		Value: "{",
+		Value:         "{",
 		StartPosition: 15,
 		EndPosition:   15,
 	}) {
@@ -220,7 +220,7 @@ func TestFunctionDecloration(t *testing.T) {
 
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token.CLOSE_BLOCK,
-		Value: "}",
+		Value:         "}",
 		StartPosition: 16,
 		EndPosition:   16,
 	}) {
@@ -273,7 +273,7 @@ func TestFunctionDeclorationWithArguments(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.OPEN_BLOCK,
-		Value: "{",
+		Value:         "{",
 		StartPosition: 19,
 		EndPosition:   19,
 	}) {
@@ -282,7 +282,7 @@ func TestFunctionDeclorationWithArguments(t *testing.T) {
 
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token.CLOSE_BLOCK,
-		Value: "}",
+		Value:         "}",
 		StartPosition: 20,
 		EndPosition:   20,
 	}) {
@@ -321,7 +321,7 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.OPEN_BLOCK,
-		Value: "{",
+		Value:         "{",
 		StartPosition: 18,
 		EndPosition:   18,
 	}) {
@@ -347,7 +347,7 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 
 	if !isSameToken(tokens[4], token.Token{
 		Code:          token.CLOSE_BLOCK,
-		Value: "}",
+		Value:         "}",
 		StartPosition: 48,
 		EndPosition:   48,
 	}) {
