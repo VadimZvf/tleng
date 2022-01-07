@@ -14,7 +14,7 @@ func TestVariableDeclaration(t *testing.T) {
 		var a;
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -55,7 +55,7 @@ func TestNumberVariable(t *testing.T) {
 		var a = 12;
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -129,7 +129,7 @@ func TestStringVariable(t *testing.T) {
 		var foo = "Hello World!";
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -203,7 +203,7 @@ func TestReferenceNumberAssignment(t *testing.T) {
 		bar = 777;
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -264,7 +264,7 @@ func TestNumberSumm(t *testing.T) {
 		bar = 3 + 9;
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -353,7 +353,7 @@ func TestReferenceSumm(t *testing.T) {
 		bar = foo + baz;
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -442,7 +442,7 @@ func TestReferenceWithNumberSumm(t *testing.T) {
 		bar = foo + 55;
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -531,7 +531,7 @@ func TestParenthesizedExpression(t *testing.T) {
 		bar = (foo + 55);
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -627,7 +627,7 @@ func TestTwoParenthesizedExpression(t *testing.T) {
 		baz = (foo + 55) / (9 - 3);
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -789,7 +789,7 @@ func TestFunctionDeclaration(t *testing.T) {
 		};
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -913,7 +913,7 @@ func TestFunctionDeclarationWithReturn(t *testing.T) {
 		};
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -1004,7 +1004,7 @@ func TestReadProperty(t *testing.T) {
 		a.b + 23
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -1088,7 +1088,7 @@ func TestReadTwoProperties(t *testing.T) {
 		a.foo.bar = 12
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -1179,7 +1179,7 @@ func TestCallFunction(t *testing.T) {
 		a()
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -1227,7 +1227,7 @@ func TestCallFunctionWithProperty(t *testing.T) {
 		bar.baz()
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -1290,7 +1290,7 @@ func TestCallFunctionWithArguments(t *testing.T) {
 		baz(bar(), "foo")
 	`
 
-	var parser = CreateParser(src)
+	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
 	var expectedAst = ast_node.ASTNode{
@@ -1435,4 +1435,15 @@ func compareNodesParams(first *ast_node.ASTNode, second *ast_node.ASTNode) strin
 	}
 
 	return ""
+}
+
+type mockStdout struct{}
+
+func (std *mockStdout) PrintLine(line string)     {}
+func (std *mockStdout) PrintSymbol(symbol string) {}
+func (std *mockStdout) SetErrorColor()            {}
+func (std *mockStdout) SetDefaultColor()          {}
+
+func createMockStdout() *mockStdout {
+	return &mockStdout{}
 }

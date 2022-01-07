@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/VadimZvf/golang/ast_node"
@@ -11,7 +10,7 @@ import (
 
 type iHeap interface {
 	CreateVariable(name string) error
-	SetVariableValue(name string, variableType string, value string) error
+	SetVariable(name string, variable *runtime_heap.VariableValue) error
 	GetVariable(name string) (*runtime_heap.VariableValue, error)
 }
 
@@ -25,7 +24,7 @@ type Runtime struct {
 }
 
 func CreateRuntime(bridge iBridge, isDebug bool) Runtime {
-	var heap = runtime_heap.CreateHeap(isDebug)
+	var heap = runtime_heap.CreateHeap(isDebug, bridge)
 
 	return Runtime{
 		heap:   &heap,
@@ -33,40 +32,40 @@ func CreateRuntime(bridge iBridge, isDebug bool) Runtime {
 	}
 }
 
-type Visitor func(*ast_node.ASTNode, iHeap) (*runtime_heap.VariableValue, error)
+type Visitor func(*ast_node.ASTNode) (*runtime_heap.VariableValue, error)
 
 func (runtime *Runtime) Run(ast *ast_node.ASTNode) error {
-	var _, err = visitNode(ast, runtime.heap)
+	var _, err = runtime.visitNode(ast)
 
 	return err
 }
 
-func visitNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableValue, error) {
+func (runtime *Runtime) visitNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	var visitors = map[string]Visitor{
-		ast_node.AST_NODE_CODE_ROOT:                     visitRootNode,
-		ast_node.AST_NODE_CODE_VARIABLE_DECLARATION:     visitVariableDeclarationNode,
-		ast_node.AST_NODE_CODE_ASSIGNMENT:               visitAssignmentNode,
-		ast_node.AST_NODE_CODE_REFERENCE:                visitReferenceNode,
-		ast_node.AST_NODE_CODE_NUMBER:                   visitNumberNode,
-		ast_node.AST_NODE_CODE_STRING:                   visitStringNode,
-		ast_node.AST_NODE_CODE_BINARY_EXPRESSION:        visitBinaryExpressionNode,
-		ast_node.AST_NODE_CODE_PARENTHESIZED_EXPRESSION: visitParenthesizedExpressionNode,
+		ast_node.AST_NODE_CODE_ROOT:                     runtime.visitRootNode,
+		ast_node.AST_NODE_CODE_VARIABLE_DECLARATION:     runtime.visitVariableDeclarationNode,
+		ast_node.AST_NODE_CODE_ASSIGNMENT:               runtime.visitAssignmentNode,
+		ast_node.AST_NODE_CODE_REFERENCE:                runtime.visitReferenceNode,
+		ast_node.AST_NODE_CODE_NUMBER:                   runtime.visitNumberNode,
+		ast_node.AST_NODE_CODE_STRING:                   runtime.visitStringNode,
+		ast_node.AST_NODE_CODE_BINARY_EXPRESSION:        runtime.visitBinaryExpressionNode,
+		ast_node.AST_NODE_CODE_PARENTHESIZED_EXPRESSION: runtime.visitParenthesizedExpressionNode,
 	}
 
 	var visitor = visitors[node.Code]
 
 	if visitor == nil {
-		return nil, runtime_error.RuntimeError{
-			Message: "Unknown ast node: " + node.Code,
-		}
+		return nil, runtime_error.CreateError("Unknown ast node: "+node.Code,
+			node,
+		)
 	}
 
-	return visitor(node, heap)
+	return visitor(node)
 }
 
-func visitRootNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableValue, error) {
+func (runtime *Runtime) visitRootNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	for _, bodyNode := range node.Body {
-		var _, bodyNodeErr = visitNode(bodyNode, heap)
+		var _, bodyNodeErr = runtime.visitNode(bodyNode)
 
 		if bodyNodeErr != nil {
 			return nil, bodyNodeErr
@@ -76,7 +75,7 @@ func visitRootNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableVa
 	return nil, nil
 }
 
-func visitVariableDeclarationNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableValue, error) {
+func (runtime *Runtime) visitVariableDeclarationNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	var variableNameParam = ast_node.GetVariableNameParam(node)
 
 	if variableNameParam == nil {
@@ -86,12 +85,12 @@ func visitVariableDeclarationNode(node *ast_node.ASTNode, heap iHeap) (*runtime_
 		)
 	}
 
-	var err = heap.CreateVariable(variableNameParam.Value)
+	var err = runtime.heap.CreateVariable(variableNameParam.Value)
 
 	return nil, err
 }
 
-func visitAssignmentNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableValue, error) {
+func (runtime *Runtime) visitAssignmentNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	var variableReferenceNode = node.Body[0]
 
 	if variableReferenceNode == nil {
@@ -116,7 +115,7 @@ func visitAssignmentNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.Vari
 		return nil, getVariableNameErr
 	}
 
-	var value, variableValueError = visitNode(variableValueNode, heap)
+	var value, variableValueError = runtime.visitNode(variableValueNode)
 
 	if variableValueError != nil {
 		return nil, variableValueError
@@ -129,24 +128,24 @@ func visitAssignmentNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.Vari
 		)
 	}
 
-	var err = heap.SetVariableValue(variableName, value.ValueType, value.Value)
+	var err = runtime.heap.SetVariable(variableName, value)
 
 	return nil, err
 }
 
-func visitReferenceNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableValue, error) {
+func (runtime *Runtime) visitReferenceNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	var variableName, variableNameErr = getVariableName(node)
 
 	if variableNameErr != nil {
 		return nil, variableNameErr
 	}
 
-	var value, err = heap.GetVariable(variableName)
+	var value, err = runtime.heap.GetVariable(variableName)
 
 	return value, err
 }
 
-func visitNumberNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableValue, error) {
+func (runtime *Runtime) visitNumberNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	var numberValue = ast_node.GetNumberValueParam(node)
 
 	if numberValue == nil {
@@ -156,10 +155,19 @@ func visitNumberNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.Variable
 		)
 	}
 
-	return &runtime_heap.VariableValue{Value: numberValue.Value, ValueType: runtime_heap.TYPE_NUMBER}, nil
+	var number, numberParsError = strconv.ParseFloat(numberValue.Value, 64)
+
+	if numberParsError != nil {
+		return nil, runtime_error.CreateError(
+			"Failed parse number value at left node",
+			node,
+		)
+	}
+
+	return &runtime_heap.VariableValue{NumberValue: number, ValueType: runtime_heap.TYPE_NUMBER}, nil
 }
 
-func visitStringNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableValue, error) {
+func (runtime *Runtime) visitStringNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	var stringValue = ast_node.GetStringValueParam(node)
 
 	if stringValue == nil {
@@ -169,10 +177,10 @@ func visitStringNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.Variable
 		)
 	}
 
-	return &runtime_heap.VariableValue{Value: stringValue.Value, ValueType: runtime_heap.TYPE_STRING}, nil
+	return &runtime_heap.VariableValue{StringValue: stringValue.Value, ValueType: runtime_heap.TYPE_STRING}, nil
 }
 
-func visitParenthesizedExpressionNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableValue, error) {
+func (runtime *Runtime) visitParenthesizedExpressionNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	var bodyNode = node.Body[0]
 
 	if bodyNode == nil {
@@ -182,10 +190,10 @@ func visitParenthesizedExpressionNode(node *ast_node.ASTNode, heap iHeap) (*runt
 		)
 	}
 
-	return visitNode(bodyNode, heap)
+	return runtime.visitNode(bodyNode)
 }
 
-func visitBinaryExpressionNode(node *ast_node.ASTNode, heap iHeap) (*runtime_heap.VariableValue, error) {
+func (runtime *Runtime) visitBinaryExpressionNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	var leftNode = node.Body[0]
 
 	if leftNode == nil {
@@ -204,13 +212,13 @@ func visitBinaryExpressionNode(node *ast_node.ASTNode, heap iHeap) (*runtime_hea
 		)
 	}
 
-	var leftNodeValue, leftNodeError = visitNode(leftNode, heap)
+	var leftNodeValue, leftNodeError = runtime.visitNode(leftNode)
 
 	if leftNodeError != nil {
 		return nil, leftNodeError
 	}
 
-	var rightNodeValue, rightNodeError = visitNode(rightNode, heap)
+	var rightNodeValue, rightNodeError = runtime.visitNode(rightNode)
 
 	if rightNodeError != nil {
 		return nil, rightNodeError
@@ -226,51 +234,56 @@ func visitBinaryExpressionNode(node *ast_node.ASTNode, heap iHeap) (*runtime_hea
 	}
 
 	if leftNodeValue.ValueType == runtime_heap.TYPE_NUMBER && rightNodeValue.ValueType == runtime_heap.TYPE_NUMBER {
-		var leftNumberValue, leftNumberParsError = strconv.ParseFloat(leftNodeValue.Value, 32)
-		if leftNumberParsError != nil {
-			return nil, runtime_error.CreateError(
-				"Failed parse number value at left node",
-				leftNode,
-			)
-		}
-
-		var rightNumberValue, rightNumberParsError = strconv.ParseFloat(rightNodeValue.Value, 32)
-		if rightNumberParsError != nil {
-			return nil, runtime_error.CreateError(
-				"Failed parse number value at right node",
-				rightNode,
-			)
-		}
+		var leftNumberValue = leftNodeValue.NumberValue
+		var rightNumberValue = rightNodeValue.NumberValue
 
 		switch expressionType.Value {
 		case "+":
 			return &runtime_heap.VariableValue{
-				Value:     fmt.Sprintf("%f", leftNumberValue+rightNumberValue),
-				ValueType: runtime_heap.TYPE_NUMBER,
+				NumberValue: leftNumberValue + rightNumberValue,
+				ValueType:   runtime_heap.TYPE_NUMBER,
 			}, nil
 		case "-":
 			return &runtime_heap.VariableValue{
-				Value:     fmt.Sprintf("%f", leftNumberValue-rightNumberValue),
-				ValueType: runtime_heap.TYPE_NUMBER,
+				NumberValue: leftNumberValue - rightNumberValue,
+				ValueType:   runtime_heap.TYPE_NUMBER,
 			}, nil
 		case "/":
 			return &runtime_heap.VariableValue{
-				Value:     fmt.Sprintf("%f", leftNumberValue/rightNumberValue),
-				ValueType: runtime_heap.TYPE_NUMBER,
+				NumberValue: leftNumberValue / rightNumberValue,
+				ValueType:   runtime_heap.TYPE_NUMBER,
 			}, nil
 		case "*":
 			return &runtime_heap.VariableValue{
-				Value:     fmt.Sprintf("%f", leftNumberValue*rightNumberValue),
-				ValueType: runtime_heap.TYPE_NUMBER,
+				NumberValue: leftNumberValue * rightNumberValue,
+				ValueType:   runtime_heap.TYPE_NUMBER,
 			}, nil
 		}
+	}
+
+	var leftString, leftNodeCastErr = runtime_heap.CastToString(leftNodeValue)
+
+	if leftNodeCastErr != nil {
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot convert variable value to string. Received: "+leftNodeValue.ValueType,
+			node,
+		), leftNodeCastErr)
+	}
+
+	var rightString, rightNodeCastErr = runtime_heap.CastToString(rightNodeValue)
+
+	if rightNodeCastErr != nil {
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot convert variable value to string. Received: "+rightString.ValueType,
+			node,
+		), rightNodeCastErr)
 	}
 
 	switch expressionType.Value {
 	case "+":
 		return &runtime_heap.VariableValue{
-			Value:     leftNodeValue.Value + rightNodeValue.Value,
-			ValueType: runtime_heap.TYPE_STRING,
+			StringValue: leftString.StringValue + rightString.StringValue,
+			ValueType:   runtime_heap.TYPE_STRING,
 		}, nil
 	}
 

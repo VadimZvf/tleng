@@ -59,6 +59,10 @@ func GetNumberValueParam(node *ASTNode) *ASTNodeParam {
 	return GetParam(node, AST_PARAM_NUMBER_VALUE)
 }
 
+func GetFunctionNameParam(node *ASTNode) *ASTNodeParam {
+	return GetParam(node, AST_PARAM_FUNCTION_NAME)
+}
+
 func GetStringValueParam(node *ASTNode) *ASTNodeParam {
 	return GetParam(node, AST_PARAM_STRING_VALUE)
 }

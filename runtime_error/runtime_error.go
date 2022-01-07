@@ -19,3 +19,23 @@ func CreateError(message string, node *ast_node.ASTNode) RuntimeError {
 		EndPosition:   node.EndPosition,
 	}
 }
+
+func MergeRuntimeErrors(first error, second error) error {
+	firstError, firstCastOk := first.(RuntimeError)
+
+	if !firstCastOk {
+		return firstError
+	}
+
+	secondError, secondCastOk := second.(RuntimeError)
+
+	if !secondCastOk {
+		return firstError
+	}
+
+	firstError.Message = secondError.Message + "\n  " + firstError.Message
+	firstError.StartPosition = secondError.StartPosition
+	firstError.EndPosition = secondError.EndPosition
+
+	return firstError
+}

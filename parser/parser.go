@@ -6,110 +6,134 @@ import (
 	"github.com/VadimZvf/golang/ast"
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/parser_error_printer"
-	"github.com/VadimZvf/golang/stdout"
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_variable_declaration"
 	"github.com/VadimZvf/golang/tokenizer"
 	"github.com/VadimZvf/golang/tokenizer_buffer"
-	"github.com/fatih/color"
 )
 
 type iSource interface {
 	NextSymbol() (symbol rune, isEnd bool)
 }
 
+type iStdout interface {
+	PrintLine(line string)
+	PrintSymbol(symbol string)
+	SetErrorColor()
+	SetDefaultColor()
+}
+
 type Parser struct {
 	// Inner props
 	source iSource
+	stdout iStdout
+	buffer tokenizer_buffer.Buffer
 }
 
-func CreateParser(source iSource) Parser {
+func CreateParser(source iSource, stdout iStdout) Parser {
+	var buffer = tokenizer_buffer.CreateBuffer(source)
+
 	return Parser{
 		source: source,
+		stdout: stdout,
+		buffer: buffer,
 	}
 }
 
 func (parser *Parser) Parse(isDebug bool) (*ast_node.ASTNode, error) {
-	var buffer = tokenizer_buffer.CreateBuffer(parser.source)
-	var tknzr = tokenizer.GetTokenizer(&buffer)
+	var tknzr = tokenizer.GetTokenizer(&parser.buffer)
 
 	tokens, parsErr := tknzr.GetTokens()
 
 	if parsErr != nil {
-		var std = stdout.CreateStdout()
-		parser_error_printer.PrintError(&buffer, &std, parsErr)
+		parser_error_printer.PrintError(&parser.buffer, parser.stdout, parsErr)
 
 		return &ast_node.ASTNode{}, parsErr
 	}
 
 	if isDebug {
 		for _, v := range tokens {
-			color.New(color.FgCyan).Printf(fmt.Sprint(v.StartPosition))
-			color.New(color.FgCyan).Printf(" type: ")
-			color.New(color.FgYellow).Printf(v.Code)
+			parser.stdout.SetDefaultColor()
+			parser.stdout.PrintSymbol(fmt.Sprint(v.StartPosition))
+			parser.stdout.PrintSymbol(" type: ")
+			parser.stdout.SetErrorColor()
+			parser.stdout.PrintSymbol(v.Code)
+			parser.stdout.SetDefaultColor()
 
-			color.New(color.FgCyan).Printf(" value: \"")
-			color.New(color.FgGreen).Printf(v.Value)
+			parser.stdout.PrintSymbol(" value: \"")
+			parser.stdout.PrintSymbol(v.Value)
 
+			parser.stdout.SetErrorColor()
 			if v.Code == token_function_declaration.FUNCTION_DECLARATION || v.Code == token_variable_declaration.VARIABLE_DECLARAION {
 				for _, param := range v.Params {
-					color.New(color.FgGreen).Printf(param.Name)
-					color.New(color.FgGreen).Printf("=")
-					color.New(color.FgGreen).Printf(param.Value)
+					parser.stdout.PrintSymbol(param.Name)
+					parser.stdout.PrintSymbol("=")
+					parser.stdout.PrintSymbol(param.Value)
+					parser.stdout.PrintSymbol(" ")
 				}
 			}
+			parser.stdout.SetDefaultColor()
 
-			color.New(color.FgCyan).Printf("\"\n")
+			parser.stdout.PrintSymbol("\"\n")
 		}
 	}
 
 	var ast, astError = ast.CreateAST(tokens)
 
 	if astError != nil && isDebug {
-		var std = stdout.CreateStdout()
-		fmt.Printf("_____________________________________________\n")
-		parser_error_printer.PrintError(&buffer, &std, astError)
-		fmt.Printf("_____________________________________________\n\n")
+		parser.stdout.PrintLine("_____________________________________________")
+		parser_error_printer.PrintError(&parser.buffer, parser.stdout, astError)
+		parser.stdout.PrintLine("_____________________________________________")
 	}
 
 	if isDebug && ast != nil {
-		printASTNode(ast, 0, false)
+		printASTNode(parser.stdout, ast, 0, false)
 	}
 
 	return ast, astError
 }
 
-func printASTNode(node *ast_node.ASTNode, depth int, isArgument bool) {
+func (parser *Parser) GetSourceCode() string {
+	return parser.buffer.GetReadedCode()
+}
+
+func printASTNode(stdout iStdout, node *ast_node.ASTNode, depth int, isArgument bool) {
+	if isArgument {
+		stdout.SetErrorColor()
+	} else {
+		stdout.SetDefaultColor()
+	}
+
 	for i := 0; i < depth; i++ {
 		if isArgument {
 			if i == 0 {
-				fmt.Printf("ARG..")
+				stdout.PrintSymbol("ARG..")
 			} else {
-				fmt.Printf(".....")
+				stdout.PrintSymbol(".....")
 			}
 		} else {
-			fmt.Printf("|    ")
+			stdout.PrintSymbol("|    ")
 		}
 	}
 
-	fmt.Printf("Code: %s ", node.Code)
+	stdout.PrintSymbol(fmt.Sprintf("Code: %s ", node.Code))
 	if len(node.Params) > 0 {
-		fmt.Printf("Params: ")
+		stdout.PrintSymbol("Params: ")
 		for _, param := range node.Params {
-			fmt.Printf("%s=\"%s\" ", param.Name, param.Value)
+			stdout.PrintSymbol(fmt.Sprintf("%s=\"%s\" ", param.Name, param.Value))
 		}
 	}
-	fmt.Printf("\n")
+	stdout.PrintSymbol("\n")
 
 	if len(node.Body) > 0 {
 		for _, child := range node.Body {
-			printASTNode(child, depth+1, false)
+			printASTNode(stdout, child, depth+1, false)
 		}
 	}
 
 	if len(node.Arguments) > 0 {
 		for _, child := range node.Arguments {
-			printASTNode(child, depth+1, true)
+			printASTNode(stdout, child, depth+1, true)
 		}
 	}
 }

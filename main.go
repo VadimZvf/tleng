@@ -7,14 +7,17 @@ import (
 	"github.com/VadimZvf/golang/parser"
 	"github.com/VadimZvf/golang/runtime"
 	"github.com/VadimZvf/golang/runtime_bridge_cli"
+	"github.com/VadimZvf/golang/runtime_error_printer"
 	"github.com/VadimZvf/golang/source_file"
+	"github.com/VadimZvf/golang/stdout"
 )
 
 func main() {
 	filePath := os.Args[1]
 
 	var src = source_file.GetSource(filePath)
-	var parser = parser.CreateParser(src)
+	var stdout = stdout.CreateStdout()
+	var parser = parser.CreateParser(src, &stdout)
 
 	var astRoot, astError = parser.Parse(true)
 
@@ -31,6 +34,6 @@ func main() {
 	var runtimeErr = rt.Run(astRoot)
 
 	if runtimeErr != nil {
-		fmt.Println(runtimeErr)
+		runtime_error_printer.PrintError(parser.GetSourceCode(), &stdout, runtimeErr)
 	}
 }
