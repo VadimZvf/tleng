@@ -42,10 +42,10 @@ const AST_NODE_CODE_STRING = "STRING"
 const AST_NODE_CODE_REFERENCE = "REFERENCE"
 const AST_NODE_CODE_FUNCTION = "FUNCTION"
 const AST_NODE_CODE_RETURN = "RETURN"
-const AST_NODE_CODE_FUNCTION_CALL = "FUNCTION_CALL"
 
 const AST_PARAM_VARIABLE_NAME = "VARIABLE_NAME"
 const AST_PARAM_FUNCTION_NAME = "FUNCTION_NAME"
+const AST_PARAM_FUNCTION_ARGUMENT_NAME = "FUNCTION_ARGUMENT_NAME"
 const AST_PARAM_NUMBER_VALUE = "NUMBER_VALUE"
 const AST_PARAM_STRING_VALUE = "STRING_VALUE"
 const AST_PARAM_BINARY_EXPRESSION_TYPE = "BINARY_EXPRESSION_TYPE"
@@ -181,14 +181,27 @@ func CreateNode(currentToken token.Token) ASTNode {
 	case token_function_declaration.FUNCTION_DECLARATION:
 		var functionName = token_function_declaration.GetFunctionNameParam(currentToken)
 
+		var params = []ASTNodeParam{{
+			Name:          AST_PARAM_FUNCTION_NAME,
+			Value:         functionName.Value,
+			StartPosition: functionName.StartPosition,
+			EndPosition:   functionName.EndPosition,
+		}}
+
+		for _, funcParam := range currentToken.Params {
+			if funcParam.Name == token_function_declaration.FUNCTION_ARGUMENT_PARAM {
+				params = append(params, ASTNodeParam{
+					Name:          AST_PARAM_FUNCTION_ARGUMENT_NAME,
+					Value:         funcParam.Value,
+					StartPosition: funcParam.StartPosition,
+					EndPosition:   funcParam.EndPosition,
+				})
+			}
+		}
+
 		return ASTNode{
-			Code: AST_NODE_CODE_FUNCTION,
-			Params: []ASTNodeParam{{
-				Name:          AST_PARAM_FUNCTION_NAME,
-				Value:         functionName.Value,
-				StartPosition: functionName.StartPosition,
-				EndPosition:   functionName.EndPosition,
-			}},
+			Code:   AST_NODE_CODE_FUNCTION,
+			Params: params,
 			// Debug data
 			StartPosition: currentToken.StartPosition,
 			EndPosition:   currentToken.EndPosition,

@@ -48,8 +48,11 @@ func (runtime *Runtime) visitNode(node *ast_node.ASTNode) (*runtime_heap.Variabl
 		ast_node.AST_NODE_CODE_REFERENCE:                runtime.visitReferenceNode,
 		ast_node.AST_NODE_CODE_NUMBER:                   runtime.visitNumberNode,
 		ast_node.AST_NODE_CODE_STRING:                   runtime.visitStringNode,
+		ast_node.AST_NODE_CODE_FUNCTION:                 runtime.visitFunctionNode,
 		ast_node.AST_NODE_CODE_BINARY_EXPRESSION:        runtime.visitBinaryExpressionNode,
 		ast_node.AST_NODE_CODE_PARENTHESIZED_EXPRESSION: runtime.visitParenthesizedExpressionNode,
+		ast_node.AST_NODE_CODE_CALL_EXPRESSION:          runtime.visitCallExpressionNode,
+		ast_node.AST_NODE_CODE_RETURN:                   runtime.visitReturnNode,
 	}
 
 	var visitor = visitors[node.Code]
@@ -112,13 +115,19 @@ func (runtime *Runtime) visitAssignmentNode(node *ast_node.ASTNode) (*runtime_he
 	var variableName, getVariableNameErr = getVariableName(variableReferenceNode)
 
 	if getVariableNameErr != nil {
-		return nil, getVariableNameErr
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot get variable name for assertion",
+			variableReferenceNode,
+		), getVariableNameErr)
 	}
 
 	var value, variableValueError = runtime.visitNode(variableValueNode)
 
 	if variableValueError != nil {
-		return nil, variableValueError
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot get variable for assertion",
+			variableValueNode,
+		), variableValueError)
 	}
 
 	if value == nil {
@@ -128,21 +137,38 @@ func (runtime *Runtime) visitAssignmentNode(node *ast_node.ASTNode) (*runtime_he
 		)
 	}
 
-	var err = runtime.heap.SetVariable(variableName, value)
+	var setVariableError = runtime.heap.SetVariable(variableName, value)
 
-	return nil, err
+	if setVariableError != nil {
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot set variable",
+			variableReferenceNode,
+		), setVariableError)
+	}
+
+	return value, nil
 }
 
 func (runtime *Runtime) visitReferenceNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
 	var variableName, variableNameErr = getVariableName(node)
 
 	if variableNameErr != nil {
-		return nil, variableNameErr
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot get variable name",
+			node,
+		), variableNameErr)
 	}
 
-	var value, err = runtime.heap.GetVariable(variableName)
+	var value, getVariableErr = runtime.heap.GetVariable(variableName)
 
-	return value, err
+	if getVariableErr != nil {
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot get variable reference",
+			node,
+		), getVariableErr)
+	}
+
+	return value, nil
 }
 
 func (runtime *Runtime) visitNumberNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
@@ -165,6 +191,16 @@ func (runtime *Runtime) visitNumberNode(node *ast_node.ASTNode) (*runtime_heap.V
 	}
 
 	return &runtime_heap.VariableValue{NumberValue: number, ValueType: runtime_heap.TYPE_NUMBER}, nil
+}
+
+func (runtime *Runtime) visitReturnNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
+	var bodyNode = node.Body[0]
+
+	if bodyNode != nil {
+		return runtime.visitNode(bodyNode)
+	}
+
+	return nil, nil
 }
 
 func (runtime *Runtime) visitStringNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
@@ -215,13 +251,20 @@ func (runtime *Runtime) visitBinaryExpressionNode(node *ast_node.ASTNode) (*runt
 	var leftNodeValue, leftNodeError = runtime.visitNode(leftNode)
 
 	if leftNodeError != nil {
-		return nil, leftNodeError
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot get left node value",
+			leftNode,
+		), leftNodeError)
 	}
 
 	var rightNodeValue, rightNodeError = runtime.visitNode(rightNode)
 
 	if rightNodeError != nil {
-		return nil, rightNodeError
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot get right node value",
+			rightNode,
+		), rightNodeError)
+
 	}
 
 	var expressionType = ast_node.GetBinaryExpressionTypeParam(node)
@@ -291,6 +334,138 @@ func (runtime *Runtime) visitBinaryExpressionNode(node *ast_node.ASTNode) (*runt
 		"Unknown binary expression. Received: "+expressionType.Value,
 		node,
 	)
+}
+
+func (runtime *Runtime) visitFunctionNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
+	var functionNameParam = ast_node.GetFunctionNameParam(node)
+
+	if functionNameParam == nil {
+		return nil, runtime_error.CreateError(
+			"Cannot define function without name",
+			node,
+		)
+	}
+
+	var createVariableForFuncErr = runtime.heap.CreateVariable(functionNameParam.Value)
+
+	if createVariableForFuncErr != nil {
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot define function with name: "+functionNameParam.Value,
+			node,
+		), createVariableForFuncErr)
+	}
+
+	var functionVariable, getFuncVariableErr = runtime.heap.GetVariable(functionNameParam.Value)
+
+	if getFuncVariableErr != nil {
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot get allocated variable for function with name: "+functionNameParam.Value,
+			node,
+		), getFuncVariableErr)
+	}
+
+	functionVariable.ValueType = runtime_heap.TYPE_FUNCTION
+	functionVariable.FunctionValue = node
+
+	var setFunctionError = runtime.heap.SetVariable(functionNameParam.Value, functionVariable)
+
+	if setFunctionError != nil {
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot set function into variable with name: "+functionNameParam.Value,
+			node,
+		), setFunctionError)
+	}
+
+	return functionVariable, nil
+}
+
+func (runtime *Runtime) visitCallExpressionNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
+	var functionReference = node.Body[0]
+
+	if functionReference == nil {
+		return nil, runtime_error.CreateError(
+			"Cannot get reference to function",
+			node,
+		)
+	}
+
+	var functionVariable, funcionVariableErr = runtime.visitNode(functionReference)
+
+	if funcionVariableErr != nil {
+		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+			"Cannot get function",
+			functionReference,
+		), funcionVariableErr)
+	}
+
+	if functionVariable.ValueType != runtime_heap.TYPE_FUNCTION {
+		return nil, runtime_error.CreateError(
+			"Is not a function",
+			functionReference,
+		)
+	}
+
+	var argumentsValues []*runtime_heap.VariableValue
+
+	for _, argumentNode := range node.Arguments {
+		var argumentValue, argumentValueErr = runtime.visitNode(argumentNode)
+
+		if argumentValueErr != nil {
+			return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+				"Cannot get function argument",
+				argumentNode,
+			), argumentValueErr)
+		}
+
+		argumentsValues = append(argumentsValues, argumentValue)
+	}
+
+	var innerRuntime = CreateRuntime(runtime.bridge, true)
+	var argumentsNames = []string{}
+
+	for _, funcParam := range functionVariable.FunctionValue.Params {
+		if funcParam.Name == ast_node.AST_PARAM_FUNCTION_ARGUMENT_NAME {
+			argumentsNames = append(argumentsNames, funcParam.Value)
+		}
+	}
+
+	for index, argumentName := range argumentsNames {
+		var createArgumentValueError = innerRuntime.heap.CreateVariable(argumentName)
+
+		if createArgumentValueError != nil {
+			return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+				"Cannot create variable for argument: "+argumentName,
+				node,
+			), createArgumentValueError)
+		}
+
+		if index < len(argumentsValues) {
+			var argumentValue = argumentsValues[index]
+
+			var setArgumentValueError = innerRuntime.heap.SetVariable(argumentName, argumentValue)
+
+			if setArgumentValueError != nil {
+				return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+					"Cannot set value for argument: "+argumentName,
+					node,
+				), setArgumentValueError)
+			}
+		}
+	}
+
+	for _, functionBodyNode := range functionVariable.FunctionValue.Body {
+		var bodyNodeValue, bodyNodeErr = innerRuntime.visitNode(functionBodyNode)
+
+		if bodyNodeErr != nil {
+			return nil, bodyNodeErr
+		}
+
+		if functionBodyNode.Code == ast_node.AST_NODE_CODE_RETURN {
+			return bodyNodeValue, nil
+		}
+	}
+
+	return nil, nil
 }
 
 func getVariableName(node *ast_node.ASTNode) (string, error) {

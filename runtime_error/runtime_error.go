@@ -34,8 +34,14 @@ func MergeRuntimeErrors(first error, second error) error {
 	}
 
 	firstError.Message = secondError.Message + "\n  " + firstError.Message
-	firstError.StartPosition = secondError.StartPosition
-	firstError.EndPosition = secondError.EndPosition
+
+	if secondError.StartPosition != 0 {
+		firstError.StartPosition = secondError.StartPosition
+	}
+
+	if secondError.EndPosition != 0 {
+		firstError.EndPosition = secondError.EndPosition
+	}
 
 	return firstError
 }

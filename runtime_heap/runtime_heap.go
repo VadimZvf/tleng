@@ -71,11 +71,14 @@ func (heap *Heap) SetVariable(name string, variable *VariableValue) error {
 
 	if prevVariable == nil {
 		return runtime_error.RuntimeError{
-			Message: "Variable not defined declared",
+			Message: "Variable not declared",
 		}
 	}
 
-	prevVariable = variable
+	prevVariable.ValueType = variable.ValueType
+	prevVariable.NumberValue = variable.NumberValue
+	prevVariable.StringValue = variable.StringValue
+	prevVariable.FunctionValue = variable.FunctionValue
 
 	return nil
 }
@@ -89,7 +92,7 @@ func (heap *Heap) GetVariable(name string) (*VariableValue, error) {
 
 	if prevVariable == nil {
 		return nil, runtime_error.RuntimeError{
-			Message: "Variable not defined declared",
+			Message: "Variable not defined",
 		}
 	}
 
