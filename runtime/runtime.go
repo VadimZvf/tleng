@@ -15,7 +15,7 @@ type iHeap interface {
 }
 
 type iBridge interface {
-	Print(value string)
+	Print(args ...*runtime_heap.VariableValue)
 }
 
 type Runtime struct {
@@ -23,13 +23,16 @@ type Runtime struct {
 	bridge iBridge
 }
 
-func CreateRuntime(bridge iBridge, isDebug bool) Runtime {
-	var heap = runtime_heap.CreateHeap(isDebug, bridge)
+func CreateRuntime(bridge iBridge) Runtime {
+	var heap = runtime_heap.CreateHeap()
 
-	return Runtime{
+	var rt = Runtime{
 		heap:   &heap,
 		bridge: bridge,
 	}
+	rt.defineEnvByBridge()
+
+	return rt
 }
 
 type Visitor func(*ast_node.ASTNode) (*runtime_heap.VariableValue, error)
@@ -398,13 +401,6 @@ func (runtime *Runtime) visitCallExpressionNode(node *ast_node.ASTNode) (*runtim
 		), funcionVariableErr)
 	}
 
-	if functionVariable.ValueType != runtime_heap.TYPE_FUNCTION {
-		return nil, runtime_error.CreateError(
-			"Is not a function",
-			functionReference,
-		)
-	}
-
 	var argumentsValues []*runtime_heap.VariableValue
 
 	for _, argumentNode := range node.Arguments {
@@ -420,7 +416,19 @@ func (runtime *Runtime) visitCallExpressionNode(node *ast_node.ASTNode) (*runtim
 		argumentsValues = append(argumentsValues, argumentValue)
 	}
 
-	var innerRuntime = CreateRuntime(runtime.bridge, true)
+	if functionVariable.ValueType == runtime_heap.TYPE_NATIVE_FUNCTION {
+		runtime.callNativeFunction(functionVariable.NativeFunctionName, argumentsValues)
+		return nil, nil
+	}
+
+	if functionVariable.ValueType != runtime_heap.TYPE_FUNCTION {
+		return nil, runtime_error.CreateError(
+			"Is not a function",
+			functionReference,
+		)
+	}
+
+	var innerRuntime = CreateRuntime(runtime.bridge)
 	var argumentsNames = []string{}
 
 	for _, funcParam := range functionVariable.FunctionValue.Params {
@@ -466,6 +474,38 @@ func (runtime *Runtime) visitCallExpressionNode(node *ast_node.ASTNode) (*runtim
 	}
 
 	return nil, nil
+}
+
+func (runtime *Runtime) defineEnvByBridge() error {
+	var printFuncName = "print"
+	var definePrintVariableErr = runtime.heap.CreateVariable(printFuncName)
+
+	if definePrintVariableErr != nil {
+		return runtime_error.MergeRuntimeErrors(runtime_error.RuntimeError{
+			Message: "Cannot create print env variable",
+		}, definePrintVariableErr)
+	}
+
+	var defineNativePrintErr = runtime.heap.SetVariable(printFuncName, &runtime_heap.VariableValue{
+		ValueType:          runtime_heap.TYPE_NATIVE_FUNCTION,
+		NativeFunctionName: printFuncName,
+	})
+
+	if defineNativePrintErr != nil {
+		return runtime_error.MergeRuntimeErrors(runtime_error.RuntimeError{
+			Message: "Cannot define print env variable",
+		}, defineNativePrintErr)
+	}
+
+	return nil
+}
+
+func (runtime *Runtime) callNativeFunction(name string, argumentsValues []*runtime_heap.VariableValue) error {
+	if name == "print" {
+		runtime.bridge.Print(argumentsValues...)
+	}
+
+	return nil
 }
 
 func getVariableName(node *ast_node.ASTNode) (string, error) {

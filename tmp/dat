@@ -8,9 +8,8 @@ function func(d, c, w) {
     return "Hello world";
 }
 
-var foo = sdas + 2;
+var foo = c + 2;
+var Wow
 Wow = 123 - 3;
 
-console.log(func(), a);
-
-asad
+print(func(), a);

@@ -30,7 +30,7 @@ func main() {
 	}
 
 	var bridge = runtime_bridge_cli.CreateBridge()
-	var rt = runtime.CreateRuntime(&bridge, true)
+	var rt = runtime.CreateRuntime(&bridge)
 	var runtimeErr = rt.Run(astRoot)
 
 	if runtimeErr != nil {

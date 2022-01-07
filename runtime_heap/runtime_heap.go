@@ -11,41 +11,30 @@ import (
 var TYPE_STRING = "STRING"
 var TYPE_NUMBER = "NUMBER"
 var TYPE_FUNCTION = "FUNCTION"
+var TYPE_NATIVE_FUNCTION = "NATIVE_FUNCTION"
 var TYPE_UNKNOWN = "UNKNOWN"
 
 type VariableValue struct {
-	ValueType     string
-	StringValue   string
-	NumberValue   float64
-	FunctionValue *ast_node.ASTNode
-}
-
-type iBridge interface {
-	Print(value string)
+	ValueType          string
+	StringValue        string
+	NumberValue        float64
+	FunctionValue      *ast_node.ASTNode
+	NativeFunctionName string
 }
 
 type Heap struct {
-	idDebug bool
-
 	values map[string]*VariableValue
-	bridge iBridge
 }
 
-func CreateHeap(idDebug bool, bridge iBridge) Heap {
+func CreateHeap() Heap {
 	var values = map[string]*VariableValue{}
 
 	return Heap{
-		idDebug,
 		values,
-		bridge,
 	}
 }
 
 func (heap *Heap) CreateVariable(name string) error {
-	if heap.idDebug {
-		heap.bridge.Print("Create variable with name: " + name)
-	}
-
 	var prevVariable = heap.values[name]
 
 	if prevVariable != nil {
@@ -62,11 +51,6 @@ func (heap *Heap) CreateVariable(name string) error {
 }
 
 func (heap *Heap) SetVariable(name string, variable *VariableValue) error {
-	if heap.idDebug {
-		heap.bridge.Print("Set variable value name: " + name)
-		logVariable(variable, heap.bridge)
-	}
-
 	var prevVariable = heap.values[name]
 
 	if prevVariable == nil {
@@ -79,15 +63,12 @@ func (heap *Heap) SetVariable(name string, variable *VariableValue) error {
 	prevVariable.NumberValue = variable.NumberValue
 	prevVariable.StringValue = variable.StringValue
 	prevVariable.FunctionValue = variable.FunctionValue
+	prevVariable.NativeFunctionName = variable.NativeFunctionName
 
 	return nil
 }
 
 func (heap *Heap) GetVariable(name string) (*VariableValue, error) {
-	if heap.idDebug {
-		heap.bridge.Print("Get variable value name: " + name)
-	}
-
 	var prevVariable = heap.values[name]
 
 	if prevVariable == nil {
@@ -151,24 +132,4 @@ func CastToString(variable *VariableValue) (*VariableValue, error) {
 	return nil, runtime_error.RuntimeError{
 		Message: "Cannot cast variable to number. Type: " + variable.ValueType,
 	}
-}
-
-func logVariable(variable *VariableValue, bridge iBridge) {
-	switch variable.ValueType {
-	case TYPE_STRING:
-		bridge.Print(fmt.Sprintf("value type: %s, value: %s\n", variable.ValueType, variable.StringValue))
-		return
-	case TYPE_NUMBER:
-		bridge.Print(fmt.Sprintf("value type: %s, value: %f\n", variable.ValueType, variable.NumberValue))
-		return
-	case TYPE_FUNCTION:
-		var runctionNameParam = ast_node.GetFunctionNameParam(variable.FunctionValue)
-		bridge.Print(fmt.Sprintf("value type: %s, name: %s\n", variable.ValueType, runctionNameParam.Value))
-		return
-	case TYPE_UNKNOWN:
-		bridge.Print(fmt.Sprintf("value type: %s\n", variable.ValueType))
-		return
-	}
-
-	bridge.Print(fmt.Sprintf("value type: %s\n", variable.ValueType))
 }
