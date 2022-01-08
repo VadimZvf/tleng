@@ -13,6 +13,7 @@ var user = "World"
 welcome(user)
 ```
 ## Demo page
+[Demo](https://vadimzvf.github.io/tleng/)
 
 ## Syntax
 Variable declaration
