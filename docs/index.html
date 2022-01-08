@@ -45,6 +45,10 @@
 		.log .line {
 			border-bottom: 1px solid #ddd;
 		}
+
+		.error {
+			color: tomato;
+		}
 	</style>
 
 </head>
@@ -62,7 +66,7 @@ welcome(user)</textarea>
 	<br />
 	<button class="run-button" id="run-button" onclick="run()" disabled>Run code</button>
 	<h2>Output:</h2>
-	<div class="code log" id="log"></div>
+	<pre class="code log" id="log"></pre>
 
 	<script>
 		// This is a polyfill for FireFox and Safari
@@ -110,6 +114,20 @@ welcome(user)</textarea>
 			const logElem = document.createElement('p');
 			logElem.innerText = value;
 			logElem.className = "line";
+			logContainer.appendChild(logElem);
+		}
+
+		function TlengPrintWord(value) {
+			const logElem = document.createElement('span');
+			logElem.innerText = value;
+			logElem.className = "word";
+			logContainer.appendChild(logElem);
+		}
+
+		function TlengPrintErrorWord(value) {
+			const logElem = document.createElement('span');
+			logElem.innerText = value;
+			logElem.className = "word error";
 			logContainer.appendChild(logElem);
 		}
 	</script>

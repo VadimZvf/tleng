@@ -5,7 +5,6 @@ import (
 
 	"github.com/VadimZvf/golang/ast"
 	"github.com/VadimZvf/golang/ast_node"
-	"github.com/VadimZvf/golang/parser_error_printer"
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_variable_declaration"
 	"github.com/VadimZvf/golang/tokenizer"
@@ -17,10 +16,8 @@ type ISource interface {
 }
 
 type iStdout interface {
-	PrintLine(line string)
-	PrintSymbol(symbol string)
-	SetErrorColor()
-	SetDefaultColor()
+	Print(line string)
+	PrintError(line string)
 }
 
 type Parser struct {
@@ -46,52 +43,39 @@ func (parser *Parser) Parse(isDebug bool) (*ast_node.ASTNode, error) {
 	tokens, parsErr := tknzr.GetTokens()
 
 	if parsErr != nil {
-		parser_error_printer.PrintError(&parser.buffer, parser.stdout, parsErr)
-
 		return &ast_node.ASTNode{}, parsErr
 	}
 
 	if isDebug {
-		parser.stdout.PrintLine("__________________TOKENS______________________")
+		parser.stdout.Print("__________________TOKENS______________________\n")
 		for _, v := range tokens {
-			parser.stdout.SetDefaultColor()
-			parser.stdout.PrintSymbol(fmt.Sprint(v.StartPosition))
-			parser.stdout.PrintSymbol(" type: ")
-			parser.stdout.SetErrorColor()
-			parser.stdout.PrintSymbol(v.Code)
-			parser.stdout.SetDefaultColor()
+			parser.stdout.Print(fmt.Sprint(v.StartPosition))
+			parser.stdout.Print(" type: ")
+			parser.stdout.PrintError(v.Code)
 
-			parser.stdout.PrintSymbol(" value: \"")
-			parser.stdout.PrintSymbol(v.Value)
+			parser.stdout.Print(" value: \"")
+			parser.stdout.Print(v.Value)
 
-			parser.stdout.SetErrorColor()
 			if v.Code == token_function_declaration.FUNCTION_DECLARATION || v.Code == token_variable_declaration.VARIABLE_DECLARAION {
 				for _, param := range v.Params {
-					parser.stdout.PrintSymbol(param.Name)
-					parser.stdout.PrintSymbol("=")
-					parser.stdout.PrintSymbol(param.Value)
-					parser.stdout.PrintSymbol(" ")
+					parser.stdout.PrintError(param.Name)
+					parser.stdout.PrintError("=")
+					parser.stdout.PrintError(param.Value)
+					parser.stdout.PrintError(" ")
 				}
 			}
-			parser.stdout.SetDefaultColor()
 
-			parser.stdout.PrintSymbol("\"\n")
+			parser.stdout.Print("\"\n")
 		}
-		parser.stdout.PrintLine("_____________________________________________")
+		parser.stdout.Print("_____________________________________________\n")
 	}
 
 	var ast, astError = ast.CreateAST(tokens)
 
-	if astError != nil && isDebug {
-		parser.stdout.PrintLine("__________________ERROR______________________")
-		parser_error_printer.PrintError(&parser.buffer, parser.stdout, astError)
-		parser.stdout.PrintLine("_____________________________________________")
-	}
-
 	if isDebug && ast != nil {
-		parser.stdout.PrintLine("___________________AST_______________________")
+		parser.stdout.Print("___________________AST_______________________\n")
 		printASTNode(parser.stdout, ast, 0, false)
-		parser.stdout.PrintLine("_____________________________________________")
+		parser.stdout.Print("_____________________________________________\n")
 	}
 
 	return ast, astError
@@ -102,32 +86,26 @@ func (parser *Parser) GetSourceCode() string {
 }
 
 func printASTNode(stdout iStdout, node *ast_node.ASTNode, depth int, isArgument bool) {
-	if isArgument {
-		stdout.SetErrorColor()
-	} else {
-		stdout.SetDefaultColor()
-	}
-
 	for i := 0; i < depth; i++ {
 		if isArgument {
 			if i == 0 {
-				stdout.PrintSymbol("ARG..")
+				stdout.Print("ARG..")
 			} else {
-				stdout.PrintSymbol(".....")
+				stdout.Print(".....")
 			}
 		} else {
-			stdout.PrintSymbol("|    ")
+			stdout.Print("|    ")
 		}
 	}
 
-	stdout.PrintSymbol(fmt.Sprintf("Code: %s ", node.Code))
+	stdout.Print(fmt.Sprintf("Code: %s ", node.Code))
 	if len(node.Params) > 0 {
-		stdout.PrintSymbol("Params: ")
+		stdout.Print("Params: ")
 		for _, param := range node.Params {
-			stdout.PrintSymbol(fmt.Sprintf("%s=\"%s\" ", param.Name, param.Value))
+			stdout.Print(fmt.Sprintf("%s=\"%s\" ", param.Name, param.Value))
 		}
 	}
-	stdout.PrintSymbol("\n")
+	stdout.Print("\n")
 
 	if len(node.Body) > 0 {
 		for _, child := range node.Body {

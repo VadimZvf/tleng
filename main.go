@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"syscall/js"
 
 	"github.com/VadimZvf/golang/parser"
+	"github.com/VadimZvf/golang/parser_error_printer"
 	"github.com/VadimZvf/golang/runtime"
 	"github.com/VadimZvf/golang/runtime_bridge_web"
 	"github.com/VadimZvf/golang/runtime_error_printer"
 	"github.com/VadimZvf/golang/source_string"
-	"github.com/VadimZvf/golang/stdout"
+	"github.com/VadimZvf/golang/stdout_web"
 )
 
 func main() {
@@ -42,13 +42,13 @@ func TlengWebRun(this js.Value, args []js.Value) interface{} {
 // }
 
 func Run(source parser.ISource, bridge runtime.IBridge) interface{} {
-	var stdout = stdout.CreateStdout()
+	var stdout = stdout_web.CreateStdoutWeb()
 	var parser = parser.CreateParser(source, &stdout)
 
-	var astRoot, astError = parser.Parse(true)
+	var astRoot, astError = parser.Parse(false)
 
 	if astError != nil {
-		fmt.Println(astError)
+		parser_error_printer.PrintError(parser.GetSourceCode(), &stdout, astError)
 		return nil
 	}
 

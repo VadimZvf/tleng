@@ -254,7 +254,7 @@ func (runtime *Runtime) visitBinaryExpressionNode(node *ast_node.ASTNode) (*runt
 
 	var leftNodeValue, leftNodeError = runtime.visitNode(leftNode)
 
-	if leftNodeError != nil {
+	if leftNodeError != nil || leftNodeValue == nil {
 		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
 			"Cannot get left node value",
 			leftNode,
@@ -263,7 +263,7 @@ func (runtime *Runtime) visitBinaryExpressionNode(node *ast_node.ASTNode) (*runt
 
 	var rightNodeValue, rightNodeError = runtime.visitNode(rightNode)
 
-	if rightNodeError != nil {
+	if rightNodeError != nil || rightNodeValue == nil {
 		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
 			"Cannot get right node value",
 			rightNode,

@@ -1439,10 +1439,8 @@ func compareNodesParams(first *ast_node.ASTNode, second *ast_node.ASTNode) strin
 
 type mockStdout struct{}
 
-func (std *mockStdout) PrintLine(line string)     {}
-func (std *mockStdout) PrintSymbol(symbol string) {}
-func (std *mockStdout) SetErrorColor()            {}
-func (std *mockStdout) SetDefaultColor()          {}
+func (std *mockStdout) Print(line string)      {}
+func (std *mockStdout) PrintError(line string) {}
 
 func createMockStdout() *mockStdout {
 	return &mockStdout{}
