@@ -1,0 +1,118 @@
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="wasm_exec.js"></script>
+	<style>
+		html, body {
+			font-family: Arial, Helvetica, sans-serif;
+			background-color: black;
+			color: snow;
+		}
+
+		body {
+			max-width: 800px;
+    		margin: 8px auto;
+			padding: 0 1rem;
+		}
+
+		.title {
+			margin: 2rem 0;
+			text-align: center;
+		}
+
+		.code {
+			font-family: monospace;
+		}
+
+		.code-text-input {
+			width: 100%;
+			background-color: black;
+			color: snow;
+		}
+
+		.run-button {
+			width: 100%;
+			display: block;
+			margin-top: 1.2rem;
+			padding: 0.8rem 1.2rem;
+			border: 0;
+			background-color: slategray;
+			color: snow;
+		}
+
+		.log .line {
+			border-bottom: 1px solid #ddd;
+		}
+	</style>
+
+</head>
+
+<body>
+	<h1 class="title">Tleng</h1>
+	<textarea class="code code-text-input" name="code" id="code-text-input" cols="60" rows="20">
+function welcome(name) {
+    print("Hello " + name + "!")
+}
+
+var user = "World"
+
+welcome(user)</textarea>
+	<br />
+	<button class="run-button" id="run-button" onclick="run()" disabled>Run code</button>
+	<h2>Output:</h2>
+	<div class="code log" id="log"></div>
+
+	<script>
+		// This is a polyfill for FireFox and Safari
+		if (!WebAssembly.instantiateStreaming) {
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer()
+				return await WebAssembly.instantiate(source, importObject)
+			}
+		}
+
+		function loadWasm(path) {
+			const go = new Go();
+
+			return new Promise((resolve, reject) => {
+				WebAssembly.instantiateStreaming(fetch(path), go.importObject)
+					.then(result => {
+						go.run(result.instance);
+						resolve(result.instance);
+					})
+					.catch(error => {
+						reject(error);
+					});
+			});
+		}
+
+		// Load the wasm file
+		loadWasm("tleng.wasm").then(wasm => {
+			console.log("Tleng is loaded");
+			document.getElementById("run-button").disabled = false;
+		}).catch(error => {
+			console.log("Tleng load failed");
+			console.error(error);
+		});
+
+		const logContainer = document.getElementById("log");
+
+		async function run() {
+			const codeText = document.getElementById("code-text-input").value;
+			logContainer.innerHTML = "";
+			console.clear();
+			TlengRun(codeText);
+		}
+
+		function TlengPrint(value) {
+			const logElem = document.createElement('p');
+			logElem.innerText = value;
+			logElem.className = "line";
+			logContainer.appendChild(logElem);
+		}
+	</script>
+</body>
+
+</html>

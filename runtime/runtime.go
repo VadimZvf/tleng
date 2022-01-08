@@ -11,19 +11,20 @@ import (
 type iHeap interface {
 	CreateVariable(name string) error
 	SetVariable(name string, variable *runtime_heap.VariableValue) error
-	GetVariable(name string) (*runtime_heap.VariableValue, error)
+	GetVariable(name string) *runtime_heap.VariableValue
+	SetParentHeap(parent interface{})
 }
 
-type iBridge interface {
+type IBridge interface {
 	Print(args ...*runtime_heap.VariableValue)
 }
 
 type Runtime struct {
 	heap   iHeap
-	bridge iBridge
+	bridge IBridge
 }
 
-func CreateRuntime(bridge iBridge) Runtime {
+func CreateRuntime(bridge IBridge) Runtime {
 	var heap = runtime_heap.CreateHeap()
 
 	var rt = Runtime{
@@ -162,13 +163,13 @@ func (runtime *Runtime) visitReferenceNode(node *ast_node.ASTNode) (*runtime_hea
 		), variableNameErr)
 	}
 
-	var value, getVariableErr = runtime.heap.GetVariable(variableName)
+	var value = runtime.heap.GetVariable(variableName)
 
-	if getVariableErr != nil {
-		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+	if value == nil {
+		return nil, runtime_error.CreateError(
 			"Cannot get variable reference",
 			node,
-		), getVariableErr)
+		)
 	}
 
 	return value, nil
@@ -358,17 +359,18 @@ func (runtime *Runtime) visitFunctionNode(node *ast_node.ASTNode) (*runtime_heap
 		), createVariableForFuncErr)
 	}
 
-	var functionVariable, getFuncVariableErr = runtime.heap.GetVariable(functionNameParam.Value)
+	var functionVariable = runtime.heap.GetVariable(functionNameParam.Value)
 
-	if getFuncVariableErr != nil {
-		return nil, runtime_error.MergeRuntimeErrors(runtime_error.CreateError(
+	if functionVariable == nil {
+		return nil, runtime_error.CreateError(
 			"Cannot get allocated variable for function with name: "+functionNameParam.Value,
 			node,
-		), getFuncVariableErr)
+		)
 	}
 
 	functionVariable.ValueType = runtime_heap.TYPE_FUNCTION
 	functionVariable.FunctionValue = node
+	functionVariable.FunctionClosureHeap = runtime.heap.(*runtime_heap.Heap)
 
 	var setFunctionError = runtime.heap.SetVariable(functionNameParam.Value, functionVariable)
 
@@ -460,6 +462,15 @@ func (runtime *Runtime) visitCallExpressionNode(node *ast_node.ASTNode) (*runtim
 			}
 		}
 	}
+
+	if functionVariable.FunctionClosureHeap == nil {
+		return nil, runtime_error.CreateError(
+			"Function closure not found",
+			node,
+		)
+	}
+
+	innerRuntime.heap.SetParentHeap(functionVariable.FunctionClosureHeap)
 
 	for _, functionBodyNode := range functionVariable.FunctionValue.Body {
 		var bodyNodeValue, bodyNodeErr = innerRuntime.visitNode(functionBodyNode)

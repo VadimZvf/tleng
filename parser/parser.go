@@ -12,7 +12,7 @@ import (
 	"github.com/VadimZvf/golang/tokenizer_buffer"
 )
 
-type iSource interface {
+type ISource interface {
 	NextSymbol() (symbol rune, isEnd bool)
 }
 
@@ -25,12 +25,12 @@ type iStdout interface {
 
 type Parser struct {
 	// Inner props
-	source iSource
+	source ISource
 	stdout iStdout
 	buffer tokenizer_buffer.Buffer
 }
 
-func CreateParser(source iSource, stdout iStdout) Parser {
+func CreateParser(source ISource, stdout iStdout) Parser {
 	var buffer = tokenizer_buffer.CreateBuffer(source)
 
 	return Parser{
@@ -52,6 +52,7 @@ func (parser *Parser) Parse(isDebug bool) (*ast_node.ASTNode, error) {
 	}
 
 	if isDebug {
+		parser.stdout.PrintLine("__________________TOKENS______________________")
 		for _, v := range tokens {
 			parser.stdout.SetDefaultColor()
 			parser.stdout.PrintSymbol(fmt.Sprint(v.StartPosition))
@@ -76,18 +77,21 @@ func (parser *Parser) Parse(isDebug bool) (*ast_node.ASTNode, error) {
 
 			parser.stdout.PrintSymbol("\"\n")
 		}
+		parser.stdout.PrintLine("_____________________________________________")
 	}
 
 	var ast, astError = ast.CreateAST(tokens)
 
 	if astError != nil && isDebug {
-		parser.stdout.PrintLine("_____________________________________________")
+		parser.stdout.PrintLine("__________________ERROR______________________")
 		parser_error_printer.PrintError(&parser.buffer, parser.stdout, astError)
 		parser.stdout.PrintLine("_____________________________________________")
 	}
 
 	if isDebug && ast != nil {
+		parser.stdout.PrintLine("___________________AST_______________________")
 		printASTNode(parser.stdout, ast, 0, false)
+		parser.stdout.PrintLine("_____________________________________________")
 	}
 
 	return ast, astError

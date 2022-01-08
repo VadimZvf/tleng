@@ -593,6 +593,18 @@ func processCallExpression(leftNode *ast_node.ASTNode, stream *ast_token_stream.
 
 	callNode.EndPosition = endCallToken.EndPosition
 
+	var nextToken, isEndNext = stream.LookNext()
+
+	if isEndNext {
+		return []*ast_node.ASTNode{&callNode}, nil
+	}
+
+	switch nextToken.Code {
+	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
+		stream.MoveNext()
+		return processBinaryExpression(&callNode, stream)
+	}
+
 	return []*ast_node.ASTNode{&callNode}, nil
 }
 

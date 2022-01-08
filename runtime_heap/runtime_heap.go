@@ -15,22 +15,25 @@ var TYPE_NATIVE_FUNCTION = "NATIVE_FUNCTION"
 var TYPE_UNKNOWN = "UNKNOWN"
 
 type VariableValue struct {
-	ValueType          string
-	StringValue        string
-	NumberValue        float64
-	FunctionValue      *ast_node.ASTNode
-	NativeFunctionName string
+	ValueType           string
+	StringValue         string
+	NumberValue         float64
+	FunctionValue       *ast_node.ASTNode
+	FunctionClosureHeap *Heap
+	NativeFunctionName  string
 }
 
 type Heap struct {
-	values map[string]*VariableValue
+	parentHeap *Heap
+	values     map[string]*VariableValue
 }
 
 func CreateHeap() Heap {
 	var values = map[string]*VariableValue{}
 
 	return Heap{
-		values,
+		parentHeap: nil,
+		values:     values,
 	}
 }
 
@@ -64,20 +67,23 @@ func (heap *Heap) SetVariable(name string, variable *VariableValue) error {
 	prevVariable.StringValue = variable.StringValue
 	prevVariable.FunctionValue = variable.FunctionValue
 	prevVariable.NativeFunctionName = variable.NativeFunctionName
+	prevVariable.FunctionClosureHeap = variable.FunctionClosureHeap
 
 	return nil
 }
 
-func (heap *Heap) GetVariable(name string) (*VariableValue, error) {
-	var prevVariable = heap.values[name]
+func (heap *Heap) GetVariable(name string) *VariableValue {
+	var variable = heap.values[name]
 
-	if prevVariable == nil {
-		return nil, runtime_error.RuntimeError{
-			Message: "Variable not defined",
-		}
+	if variable == nil && heap.parentHeap != nil {
+		return heap.parentHeap.GetVariable(name)
 	}
 
-	return prevVariable, nil
+	return variable
+}
+
+func (heap *Heap) SetParentHeap(parent interface{}) {
+	heap.parentHeap = parent.(*Heap)
 }
 
 func CastToNumber(variable *VariableValue) (*VariableValue, error) {

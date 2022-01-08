@@ -1,44 +1,54 @@
-package runtime_bridge_cli
+package runtime_bridge_web
 
 import (
 	"fmt"
+	"syscall/js"
 
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/runtime_heap"
 )
 
+type JSPrint func(value string)
+
 type Bridge struct {
+	JSPrint JSPrint
 }
 
 func CreateBridge() Bridge {
-	return Bridge{}
+	WindowJS := js.Global().Get("window")
+
+	return Bridge{
+		JSPrint: func(value string) {
+			WindowJS.Call("TlengPrint", value)
+		},
+	}
 }
 
 func (bridge *Bridge) Print(args ...*runtime_heap.VariableValue) {
 	for _, arg := range args {
-		printArg(arg)
+		printArg(arg, bridge)
 	}
 }
 
-func printArg(variable *runtime_heap.VariableValue) {
+func printArg(variable *runtime_heap.VariableValue, bridge *Bridge) {
 	if variable.ValueType == runtime_heap.TYPE_STRING {
-		fmt.Println(variable.StringValue)
+		bridge.JSPrint(variable.StringValue)
 	}
 
 	if variable.ValueType == runtime_heap.TYPE_NUMBER {
-		fmt.Println(variable.NumberValue)
+		bridge.JSPrint(fmt.Sprintf("%f", variable.NumberValue))
 	}
 
 	if variable.ValueType == runtime_heap.TYPE_FUNCTION {
 		var functionName = ast_node.GetFunctionNameParam(variable.FunctionValue)
-		fmt.Println("function " + functionName.Value)
+		bridge.JSPrint("function " + functionName.Value)
 	}
 
 	if variable.ValueType == runtime_heap.TYPE_NATIVE_FUNCTION {
-		fmt.Println("native code")
+		bridge.JSPrint("native code")
 	}
 
 	if variable.ValueType == runtime_heap.TYPE_UNKNOWN {
-		fmt.Println("unknown")
+		bridge.JSPrint("unknown")
 	}
 }

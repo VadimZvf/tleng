@@ -1,15 +1,8 @@
-var a = 12;
-
-var c = (((23 / 2) + 23) / (32 - 2)) * 11;
-
-function func(d, c, w) {
-    var b = 33332;
-
-    return "Hello world";
+function welcomeFabric(welcomePrefix) {
+    return function welcome(name) {
+        print(welcomePrefix + " " + name)
+    }
 }
 
-var foo = c + 2;
-var Wow
-Wow = 123 - 3;
-
-print(func(), a);
+var sayHi = welcomeFabric("Hi")
+sayHi("Tleng")
