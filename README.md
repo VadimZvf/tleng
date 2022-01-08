@@ -1,4 +1,4 @@
-# Tleng
+# TLENg
 Useless programming language
 
 ## Example
