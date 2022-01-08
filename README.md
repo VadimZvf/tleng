@@ -36,7 +36,7 @@ String
 ```js
 var b = "Some value"
 ```
-Function. This example will be print: `3.000000`
+Function. This example will print: `3.000000`
 ```js
 function foo(inner) {
     return inner() + 1
