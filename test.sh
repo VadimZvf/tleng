@@ -62,3 +62,10 @@ cd parser
 go test
 cd ..
 echo ""
+
+echo "Runtime"
+echo "======================"
+cd runtime
+go test
+cd ..
+echo ""

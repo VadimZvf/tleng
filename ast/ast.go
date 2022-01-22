@@ -603,6 +603,9 @@ func processCallExpression(leftNode *ast_node.ASTNode, stream *ast_token_stream.
 	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
 		stream.MoveNext()
 		return processBinaryExpression(&callNode, stream)
+	case token.OPEN_EXPRESSION:
+		stream.MoveNext()
+		return processCallExpression(&callNode, stream)
 	}
 
 	return []*ast_node.ASTNode{&callNode}, nil
