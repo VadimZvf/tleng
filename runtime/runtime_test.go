@@ -145,6 +145,24 @@ func TestParenthesizedExpression(t *testing.T) {
 	}
 }
 
+func TestNoFunctionReferenceError(t *testing.T) {
+	var _, err = runCode(`
+	function welcome() {
+    print("Hi")
+	}
+
+	welcome("Hi")("Tleng")
+	`)
+
+	if err == nil {
+		t.Errorf("Should return a error")
+	}
+
+	if err.Error() != "Error in calling expression, here is no reference to a function" {
+		t.Errorf("Should return reference error, but received: \"%s\"", err.Error())
+	}
+}
+
 func runCode(code string) (*runtime_bridge_mock.Bridge, error) {
 	var src = source_mock.GetSourceMock(code)
 	var bridge = runtime_bridge_mock.CreateBridge()

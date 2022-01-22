@@ -418,6 +418,13 @@ func (runtime *Runtime) visitCallExpressionNode(node *ast_node.ASTNode) (*runtim
 		argumentsValues = append(argumentsValues, argumentValue)
 	}
 
+	if functionVariable == nil {
+		return nil, runtime_error.CreateError(
+			"Error in calling expression, here is no reference to a function",
+			node,
+		)
+	}
+
 	if functionVariable.ValueType == runtime_heap.TYPE_NATIVE_FUNCTION {
 		runtime.callNativeFunction(functionVariable.NativeFunctionName, argumentsValues)
 		return nil, nil
