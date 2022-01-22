@@ -4,5 +4,4 @@ function welcomeFabric(welcomePrefix) {
     }
 }
 
-var sayHi = welcomeFabric("Hi")
-sayHi("Tleng")
+var sayHi = welcomeFabric("Hi")("Tleng")

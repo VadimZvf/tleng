@@ -32,6 +32,6 @@ func (source *SourceMock) NextSymbol() (rune, bool) {
 	return a, false
 }
 
-func GetSourceMock() *SourceMock {
-	return &SourceMock{false, "", -1}
+func GetSourceMock(code string) *SourceMock {
+	return &SourceMock{false, code, -1}
 }

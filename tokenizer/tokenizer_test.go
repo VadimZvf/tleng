@@ -15,19 +15,17 @@ import (
 )
 
 func TestStringVariable(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		var a = "Hello world";
-	`
-
+	var src = source_mock.GetSourceMock(`
+	var a = "Hello world";
+`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
 
 	if !isSameToken(tokens[0], token.Token{
 		Code:          token_variable_declaration.VARIABLE_DECLARAION,
-		StartPosition: 3,
-		EndPosition:   7,
+		StartPosition: 2,
+		EndPosition:   6,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -35,8 +33,8 @@ func TestStringVariable(t *testing.T) {
 	if !checkParam(tokens[0], token.TokenParam{
 		Name:          token_variable_declaration.VARIABLE_NAME_PARAM,
 		Value:         "a",
-		StartPosition: 7,
-		EndPosition:   7,
+		StartPosition: 6,
+		EndPosition:   6,
 	}) {
 		t.Errorf("Wrong param")
 	}
@@ -44,8 +42,8 @@ func TestStringVariable(t *testing.T) {
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.ASSIGNMENT,
 		Value:         "=",
-		StartPosition: 9,
-		EndPosition:   9,
+		StartPosition: 8,
+		EndPosition:   8,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -53,17 +51,15 @@ func TestStringVariable(t *testing.T) {
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token_string.STRING,
 		Value:         "Hello world",
-		StartPosition: 11,
-		EndPosition:   23,
+		StartPosition: 10,
+		EndPosition:   22,
 	}) {
 		t.Errorf("Wrong token")
 	}
 }
 
 func TestKeywordLikeVariableDecloration(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `constA;`
-
+	var src = source_mock.GetSourceMock(`constA;`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
@@ -79,9 +75,7 @@ func TestKeywordLikeVariableDecloration(t *testing.T) {
 }
 
 func TestKeywordLikeFunctionDecloration(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `functionA();`
-
+	var src = source_mock.GetSourceMock(`functionA();`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
@@ -115,9 +109,7 @@ func TestKeywordLikeFunctionDecloration(t *testing.T) {
 }
 
 func TestCopyVariableByLink(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `var a = b;`
-
+	var src = source_mock.GetSourceMock(`var a = b;`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
@@ -159,9 +151,7 @@ func TestCopyVariableByLink(t *testing.T) {
 }
 
 func TestVariableWithTokenName(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `var functionA;`
-
+	var src = source_mock.GetSourceMock(`var functionA;`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
@@ -185,9 +175,7 @@ func TestVariableWithTokenName(t *testing.T) {
 }
 
 func TestFunctionDecloration(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function foo() {}`
-
+	var src = source_mock.GetSourceMock(`function foo() {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
@@ -229,9 +217,7 @@ func TestFunctionDecloration(t *testing.T) {
 }
 
 func TestFunctionDeclorationWithArguments(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function foo(a, b) {}`
-
+	var src = source_mock.GetSourceMock(`function foo(a, b) {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
 	var tokens, _ = tokenizer.GetTokens()
@@ -291,12 +277,11 @@ func TestFunctionDeclorationWithArguments(t *testing.T) {
 }
 
 func TestFunctionWithReturnStatement(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		function bar() {
-			return "Avada kedavra"
-		}
-	`
+	var src = source_mock.GetSourceMock(`
+	function bar() {
+		return "Avada kedavra"
+	}
+`)
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
@@ -304,8 +289,8 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 
 	if !isSameToken(tokens[0], token.Token{
 		Code:          token_function_declaration.FUNCTION_DECLARATION,
-		StartPosition: 3,
-		EndPosition:   16,
+		StartPosition: 2,
+		EndPosition:   15,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -313,8 +298,8 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 	if !checkParam(tokens[0], token.TokenParam{
 		Name:          token_function_declaration.FUNCTION_NAME_PARAM,
 		Value:         "bar",
-		StartPosition: 12,
-		EndPosition:   14,
+		StartPosition: 11,
+		EndPosition:   13,
 	}) {
 		t.Errorf("Wrong param")
 	}
@@ -322,16 +307,16 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 	if !isSameToken(tokens[1], token.Token{
 		Code:          token.OPEN_BLOCK,
 		Value:         "{",
-		StartPosition: 18,
-		EndPosition:   18,
+		StartPosition: 17,
+		EndPosition:   17,
 	}) {
 		t.Errorf("Wrong token")
 	}
 
 	if !isSameToken(tokens[2], token.Token{
 		Code:          token_return.RETURN_DECLARATION,
-		StartPosition: 23,
-		EndPosition:   28,
+		StartPosition: 21,
+		EndPosition:   26,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -339,8 +324,8 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 	if !isSameToken(tokens[3], token.Token{
 		Code:          token_string.STRING,
 		Value:         "Avada kedavra",
-		StartPosition: 30,
-		EndPosition:   44,
+		StartPosition: 28,
+		EndPosition:   42,
 	}) {
 		t.Errorf("Wrong token")
 	}
@@ -348,24 +333,23 @@ func TestFunctionWithReturnStatement(t *testing.T) {
 	if !isSameToken(tokens[4], token.Token{
 		Code:          token.CLOSE_BLOCK,
 		Value:         "}",
-		StartPosition: 48,
-		EndPosition:   48,
+		StartPosition: 45,
+		EndPosition:   45,
 	}) {
 		t.Errorf("Wrong token")
 	}
 }
 
 func TestSyntaxError(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		const a = 123;
+	var src = source_mock.GetSourceMock(`
+	const a = 123;
 
-		^
+	^
 
-		function foo() {
+	function foo() {
 
-		}
-	`
+	}
+`)
 
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var tokenizer = GetTokenizer(&buffer)
@@ -385,7 +369,7 @@ func TestSyntaxError(t *testing.T) {
 		t.Errorf("Should return syntax error message, but receinve: \"%s\"", re.Message)
 	}
 
-	if re.StartPosition != 21 || re.EndPosition != 21 {
+	if re.StartPosition != 19 || re.EndPosition != 19 {
 		t.Errorf("Should return position of error. Recived start: %d, end: %d", re.StartPosition, re.EndPosition)
 	}
 }

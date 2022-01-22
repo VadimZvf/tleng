@@ -11,8 +11,7 @@ import (
 )
 
 func TestVariableShouldNotBeFound(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `va r = "";`
+	var src = source_mock.GetSourceMock(`va r = "";`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	token, isFound, _ := VariableDeclarationProcessor(&buffer)
@@ -27,8 +26,7 @@ func TestVariableShouldNotBeFound(t *testing.T) {
 }
 
 func TestEmptyVariableDecloration(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `var a;`
+	var src = source_mock.GetSourceMock(`var a;`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	foundToken, isFound, _ := VariableDeclarationProcessor(&buffer)
@@ -54,8 +52,7 @@ func TestEmptyVariableDecloration(t *testing.T) {
 }
 
 func TestLongNameVariableDecloration(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `var wow_foo_bar;`
+	var src = source_mock.GetSourceMock(`var wow_foo_bar;`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	foundToken, isFound, _ := VariableDeclarationProcessor(&buffer)
@@ -81,8 +78,7 @@ func TestLongNameVariableDecloration(t *testing.T) {
 }
 
 func TestErrorInvalidName(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `var 123foo`
+	var src = source_mock.GetSourceMock(`var 123foo`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	_, _, err := VariableDeclarationProcessor(&buffer)

@@ -10,9 +10,7 @@ import (
 )
 
 func TestReadProperty(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `foo.bar`
-
+	var src = source_mock.GetSourceMock(`foo.bar`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var token = token.Token{}
 	var isFound = false
@@ -38,9 +36,7 @@ func TestReadProperty(t *testing.T) {
 }
 
 func TestReadPropertyWithUnderscore(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `foo._bar`
-
+	var src = source_mock.GetSourceMock(`foo._bar`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var token = token.Token{}
 	var isFound = false
@@ -66,9 +62,7 @@ func TestReadPropertyWithUnderscore(t *testing.T) {
 }
 
 func TestErrorInvalidPropertyName(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `bar.%`
-
+	var src = source_mock.GetSourceMock(`bar.%`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var isFound = false
 	var err = error(nil)

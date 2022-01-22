@@ -9,11 +9,9 @@ import (
 )
 
 func TestVariableDeclaration(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		var a;
-	`
-
+	var src = source_mock.GetSourceMock(`
+	var a;
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -50,11 +48,9 @@ func TestVariableDeclaration(t *testing.T) {
 }
 
 func TestNumberVariable(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		var a = 12;
-	`
-
+	var src = source_mock.GetSourceMock(`
+	var a = 12;
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -124,11 +120,9 @@ func TestNumberVariable(t *testing.T) {
 }
 
 func TestStringVariable(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		var foo = "Hello World!";
-	`
-
+	var src = source_mock.GetSourceMock(`
+	var foo = "Hello World!";
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -198,11 +192,9 @@ func TestStringVariable(t *testing.T) {
 }
 
 func TestReferenceNumberAssignment(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		bar = 777;
-	`
-
+	var src = source_mock.GetSourceMock(`
+	bar = 777;
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -259,11 +251,9 @@ func TestReferenceNumberAssignment(t *testing.T) {
 }
 
 func TestNumberSumm(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		bar = 3 + 9;
-	`
-
+	var src = source_mock.GetSourceMock(`
+	bar = 3 + 9;
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -348,11 +338,9 @@ func TestNumberSumm(t *testing.T) {
 }
 
 func TestReferenceSumm(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		bar = foo + baz;
-	`
-
+	var src = source_mock.GetSourceMock(`
+	bar = foo + baz;
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -437,11 +425,9 @@ func TestReferenceSumm(t *testing.T) {
 }
 
 func TestReferenceWithNumberSumm(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		bar = foo + 55;
-	`
-
+	var src = source_mock.GetSourceMock(`
+	bar = foo + 55;
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -526,11 +512,9 @@ func TestReferenceWithNumberSumm(t *testing.T) {
 }
 
 func TestParenthesizedExpression(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		bar = (foo + 55);
-	`
-
+	var src = source_mock.GetSourceMock(`
+	bar = (foo + 55);
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -622,11 +606,9 @@ func TestParenthesizedExpression(t *testing.T) {
 }
 
 func TestTwoParenthesizedExpression(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		baz = (foo + 55) / (9 - 3);
-	`
-
+	var src = source_mock.GetSourceMock(`
+	baz = (foo + 55) / (9 - 3);
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -781,14 +763,12 @@ func TestTwoParenthesizedExpression(t *testing.T) {
 }
 
 func TestFunctionDeclaration(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		function baz() {
-			var a = 1;
-			b = 2;
-		};
-	`
-
+	var src = source_mock.GetSourceMock(`
+	function baz() {
+		var a = 1;
+		b = 2;
+	};
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -906,13 +886,11 @@ func TestFunctionDeclaration(t *testing.T) {
 }
 
 func TestFunctionDeclarationWithReturn(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		function baz() {
-			return "Hello" + "World"
-		};
-	`
-
+	var src = source_mock.GetSourceMock(`
+	function baz() {
+		return "Hello" + "World"
+	};
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -999,11 +977,9 @@ func TestFunctionDeclarationWithReturn(t *testing.T) {
 }
 
 func TestReadProperty(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		a.b + 23
-	`
-
+	var src = source_mock.GetSourceMock(`
+	a.b + 23
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -1083,11 +1059,9 @@ func TestReadProperty(t *testing.T) {
 }
 
 func TestReadTwoProperties(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		a.foo.bar = 12
-	`
-
+	var src = source_mock.GetSourceMock(`
+	a.foo.bar = 12
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -1174,11 +1148,9 @@ func TestReadTwoProperties(t *testing.T) {
 }
 
 func TestCallFunction(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		a()
-	`
-
+	var src = source_mock.GetSourceMock(`
+	a()
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -1222,11 +1194,9 @@ func TestCallFunction(t *testing.T) {
 }
 
 func TestCallFunctionWithProperty(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		bar.baz()
-	`
-
+	var src = source_mock.GetSourceMock(`
+	bar.baz()
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 
@@ -1285,11 +1255,9 @@ func TestCallFunctionWithProperty(t *testing.T) {
 }
 
 func TestCallFunctionWithArguments(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `
-		baz(bar(), "foo")
-	`
-
+	var src = source_mock.GetSourceMock(`
+	baz(bar(), "foo")
+`)
 	var parser = CreateParser(src, createMockStdout())
 	var ast, err = parser.Parse(false)
 

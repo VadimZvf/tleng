@@ -102,8 +102,7 @@ func TestGetPosition(t *testing.T) {
 }
 
 func TestTrimNext(t *testing.T) {
-	var source = source_mock.GetSourceMock()
-	source.FullText = "            wow    "
+	var source = source_mock.GetSourceMock("            wow    ")
 	buffer := CreateBuffer(source)
 	buffer.TrimNext()
 	symbol := buffer.GetSymbol()
@@ -118,8 +117,7 @@ func TestTrimNext(t *testing.T) {
 }
 
 func TestTrimNextWothoutSpace(t *testing.T) {
-	var source = source_mock.GetSourceMock()
-	source.FullText = "test text"
+	var source = source_mock.GetSourceMock("test text")
 	buffer := CreateBuffer(source)
 	buffer.TrimNext()
 	symbol := buffer.GetSymbol()

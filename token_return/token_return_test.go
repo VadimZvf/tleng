@@ -8,8 +8,7 @@ import (
 )
 
 func TestReturnShouldNotBeFound(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `returnfoo`
+	var src = source_mock.GetSourceMock(`returnfoo`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	token, isFound, _ := ReturnProcessor(&buffer)
@@ -24,8 +23,7 @@ func TestReturnShouldNotBeFound(t *testing.T) {
 }
 
 func TestEmptyReturn(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `return`
+	var src = source_mock.GetSourceMock(`return`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	token, isFound, _ := ReturnProcessor(&buffer)

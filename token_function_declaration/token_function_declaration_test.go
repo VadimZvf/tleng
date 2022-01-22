@@ -11,10 +11,9 @@ import (
 )
 
 func TestFunctionNotFound(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `func wow() {}
-						wowdsa()
-					`
+	var src = source_mock.GetSourceMock(`func wow() {}
+	wowdsa()
+`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	token, isFound, _ := FunctionDeclorationProcessor(&buffer)
@@ -29,8 +28,7 @@ func TestFunctionNotFound(t *testing.T) {
 }
 
 func TestFunctionWithoutArguments(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function wow() {}`
+	var src = source_mock.GetSourceMock(`function wow() {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	foundToken, isFound, _ := FunctionDeclorationProcessor(&buffer)
@@ -60,8 +58,7 @@ func TestFunctionWithoutArguments(t *testing.T) {
 }
 
 func TestIgnoreSpaces(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function      foo    (     ) {}`
+	var src = source_mock.GetSourceMock(`function      foo    (     ) {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	foundToken, isFound, _ := FunctionDeclorationProcessor(&buffer)
@@ -91,8 +88,7 @@ func TestIgnoreSpaces(t *testing.T) {
 }
 
 func TestParseSingleArgument(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function      bar(baz) {}`
+	var src = source_mock.GetSourceMock(`function      bar(baz) {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	foundToken, isFound, _ := FunctionDeclorationProcessor(&buffer)
@@ -133,8 +129,7 @@ func TestParseSingleArgument(t *testing.T) {
 }
 
 func TestParseManyArgument(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function      bar( baz,  foo,     gaz) {}`
+	var src = source_mock.GetSourceMock(`function      bar( baz,  foo,     gaz) {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 
 	foundToken, _, _ := FunctionDeclorationProcessor(&buffer)
@@ -174,8 +169,7 @@ func TestParseManyArgument(t *testing.T) {
 }
 
 func TestErrorNameParsing(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function ( baz,  foo,     gaz) {}`
+	var src = source_mock.GetSourceMock(`function ( baz,  foo,     gaz) {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var err = error(nil)
 
@@ -201,8 +195,7 @@ func TestErrorNameParsing(t *testing.T) {
 }
 
 func TestErrorDeclorationParsing(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function foo baz,  foo,     gaz) {}`
+	var src = source_mock.GetSourceMock(`function foo baz,  foo,     gaz) {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var err = error(nil)
 
@@ -228,8 +221,7 @@ func TestErrorDeclorationParsing(t *testing.T) {
 }
 
 func TestErrorSecondBracketParsing(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function foo (gaz {}`
+	var src = source_mock.GetSourceMock(`function foo (gaz {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var err = error(nil)
 
@@ -255,8 +247,7 @@ func TestErrorSecondBracketParsing(t *testing.T) {
 }
 
 func TestErrorArgumentsParsing(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `function foo (  , a) {}`
+	var src = source_mock.GetSourceMock(`function foo (  , a) {}`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var err = error(nil)
 

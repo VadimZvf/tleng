@@ -10,9 +10,7 @@ import (
 )
 
 func TestNumberNotFound(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `foo323`
-
+	var src = source_mock.GetSourceMock(`foo323`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var token = token.Token{}
 	var isFound = false
@@ -29,9 +27,7 @@ func TestNumberNotFound(t *testing.T) {
 }
 
 func TestNumber(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `32112`
-
+	var src = source_mock.GetSourceMock(`32112`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var token = token.Token{}
 	var isFound = false
@@ -52,9 +48,7 @@ func TestNumber(t *testing.T) {
 }
 
 func TestErrorParsing(t *testing.T) {
-	var src = source_mock.GetSourceMock()
-	src.FullText = `231wow`
-
+	var src = source_mock.GetSourceMock(`231wow`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)
 	var err = error(nil)
 
