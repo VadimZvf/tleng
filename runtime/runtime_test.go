@@ -180,6 +180,22 @@ func TestNoFunctionReferenceError(t *testing.T) {
 	}
 }
 
+func TestIIFE(t *testing.T) {
+	var bridge, err = runCode(`
+	(function foo(message) {
+		print(message)
+	})("Hello");
+	`)
+
+	if err != nil {
+		t.Errorf("Code failed with error: \"%s\"", err.Error())
+	}
+
+	if bridge.GetLastPring() != "Hello" {
+		t.Errorf("Code should print message \"Hello\", but received: \"%s\"", bridge.GetLastPring())
+	}
+}
+
 func runCode(code string) (*runtime_bridge_mock.Bridge, error) {
 	var src = source_mock.GetSourceMock(code)
 	var bridge = runtime_bridge_mock.CreateBridge()

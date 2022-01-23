@@ -388,6 +388,10 @@ func processParenthesizedExpression(stream *ast_token_stream.TokenStream) ([]*as
 		}
 
 		return binaryExpressionNodes, nil
+
+	case token.OPEN_EXPRESSION:
+		stream.MoveNext()
+		return processCallExpression(&parenthesizedExpressionNode, stream)
 	}
 
 	return []*ast_node.ASTNode{&parenthesizedExpressionNode}, nil
