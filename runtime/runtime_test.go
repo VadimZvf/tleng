@@ -75,8 +75,8 @@ func TestCurryingFunction(t *testing.T) {
 		t.Errorf("Code failed with error: \"%s\"", err.Error())
 	}
 
-	if bridge.GetLastPring() != "13.000000" {
-		t.Errorf("Code should print message \"13.000000\", but received: \"%s\"", bridge.GetLastPring())
+	if bridge.GetLastPring() != "13" {
+		t.Errorf("Code should print message \"13\", but received: \"%s\"", bridge.GetLastPring())
 	}
 }
 
@@ -97,8 +97,8 @@ func TestFunctionClosure(t *testing.T) {
 		t.Errorf("Code failed with error: \"%s\"", err.Error())
 	}
 
-	if bridge.GetLastPring() != "7.000000" {
-		t.Errorf("Code should print message \"7.000000\", but received: \"%s\"", bridge.GetLastPring())
+	if bridge.GetLastPring() != "7" {
+		t.Errorf("Code should print message \"7\", but received: \"%s\"", bridge.GetLastPring())
 	}
 }
 
@@ -140,8 +140,25 @@ func TestParenthesizedExpression(t *testing.T) {
 		t.Errorf("Code failed with error: \"%s\"", err.Error())
 	}
 
-	if bridge.GetLastPring() != "12.000000" {
-		t.Errorf("Code should print message \"12.000000\", but received: \"%s\"", bridge.GetLastPring())
+	if bridge.GetLastPring() != "12" {
+		t.Errorf("Code should print message \"12\", but received: \"%s\"", bridge.GetLastPring())
+	}
+}
+
+func TestFloatValues(t *testing.T) {
+	var bridge, err = runCode(`
+	var first = 3.5
+	var second = 2.25
+
+	print(first / second)
+	`)
+
+	if err != nil {
+		t.Errorf("Code failed with error: \"%s\"", err.Error())
+	}
+
+	if bridge.GetLastPring() != "1.555556" {
+		t.Errorf("Code should print message \"1.555556\", but received: \"%s\"", bridge.GetLastPring())
 	}
 }
 

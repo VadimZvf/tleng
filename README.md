@@ -1,62 +1,79 @@
 # TLENg
+
 Useless programming language
 
 ## Example
 
 ```js
 function welcome(name) {
-    print("Hello " + name)
+  print("Hello " + name);
 }
 
-var user = "World"
+var user = "World";
 
-welcome(user)
+welcome(user);
 ```
+
 ## Demo page
+
 [Demo](https://vadimzvf.github.io/tleng/)
 
 ## Syntax
+
 Variable declaration
+
 ```js
-var a = 1
+var a = 1;
 ```
+
 Function declaration
+
 ```js
 function summ(a, b) {
-    return a + b
+  return a + b;
 }
 ```
 
 ## Data types
-Integer number only
+
+Float number only
+
 ```js
-var a = 130
+var a = 130;
 ```
+
 String
+
 ```js
-var b = "Some value"
+var b = "Some value";
 ```
-Function. This example will print: `3.000000`
+
+Function. This example will print: `3`
+
 ```js
 function foo(inner) {
-    return inner() + 1
+  return inner() + 1;
 }
 
 function innerFunc() {
-    return 2
+  return 2;
 }
 
-var a = foo(innerFunc)
+var a = foo(innerFunc);
 
-print(a)
+print(a);
 ```
+
 Unknown
+
 ```js
-var b
+var b;
 ```
 
 ## Build in methods
+
 Log values
+
 ```js
-print("Some text")
+print("Some text");
 ```

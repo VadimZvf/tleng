@@ -20,6 +20,17 @@ func proccess(buffer token.IBuffer) (token.Token, bool, error) {
 		buffer.Next()
 	}
 
+	// Check that number has decimal part
+	if buffer.GetSymbol() == '.' {
+		buffer.AddSymbol()
+		buffer.Next()
+
+		for token.IsNumber(buffer.GetSymbol()) && !buffer.GetIsEnd() {
+			buffer.AddSymbol()
+			buffer.Next()
+		}
+	}
+
 	if token.IsKeyWordSymbol(buffer.GetSymbol()) {
 		return token.Token{}, false, parser_error.ParserError{
 			Message:       "Syntax error, invalid keyword name. Keyword cannot start with number",

@@ -2,6 +2,7 @@ package runtime_bridge_web
 
 import (
 	"fmt"
+	"strings"
 	"syscall/js"
 
 	"github.com/VadimZvf/golang/ast_node"
@@ -36,7 +37,7 @@ func printArg(variable *runtime_heap.VariableValue, bridge *Bridge) {
 	}
 
 	if variable.ValueType == runtime_heap.TYPE_NUMBER {
-		bridge.JSPrint(fmt.Sprintf("%f", variable.NumberValue))
+		bridge.JSPrint(strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", variable.NumberValue), "0"), "."))
 	}
 
 	if variable.ValueType == runtime_heap.TYPE_FUNCTION {

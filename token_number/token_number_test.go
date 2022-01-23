@@ -47,6 +47,31 @@ func TestNumber(t *testing.T) {
 	}
 }
 
+func TestFloatNumber(t *testing.T) {
+	var src = source_mock.GetSourceMock(`3.23`)
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var token = token.Token{}
+	var isFound = false
+
+	token, isFound, _ = NumberProcessor(&buffer)
+
+	if isFound == false {
+		t.Errorf("Token should be found")
+	}
+
+	if token.Code != NUMBER {
+		t.Errorf("Token should be found")
+	}
+
+	if token.Value != "3.23" {
+		t.Errorf("Should save token value")
+	}
+
+	if token.StartPosition != 0 || token.EndPosition != 3 {
+		t.Errorf("Should save token position")
+	}
+}
+
 func TestErrorParsing(t *testing.T) {
 	var src = source_mock.GetSourceMock(`231wow`)
 	var buffer = tokenizer_buffer.CreateBuffer(src)

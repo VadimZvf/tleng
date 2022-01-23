@@ -2,6 +2,7 @@ package runtime_bridge_mock
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/runtime_heap"
@@ -35,7 +36,7 @@ func (bridge *Bridge) saveLogArg(variable *runtime_heap.VariableValue) {
 	}
 
 	if variable.ValueType == runtime_heap.TYPE_NUMBER {
-		bridge.log = append(bridge.log, fmt.Sprintf("%f", variable.NumberValue))
+		bridge.log = append(bridge.log, strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", variable.NumberValue), "0"), "."))
 	}
 
 	if variable.ValueType == runtime_heap.TYPE_FUNCTION {
