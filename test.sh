@@ -49,6 +49,13 @@ go test
 cd ..
 echo ""
 
+echo "String token"
+echo "======================"
+cd token_string
+go test
+cd ..
+echo ""
+
 echo "Tokenizer"
 echo "======================"
 cd tokenizer

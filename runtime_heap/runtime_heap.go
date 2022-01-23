@@ -3,6 +3,7 @@ package runtime_heap
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/runtime_error"
@@ -124,7 +125,7 @@ func CastToString(variable *VariableValue) (*VariableValue, error) {
 	if variable.ValueType == TYPE_NUMBER {
 		return &VariableValue{
 			ValueType:   TYPE_STRING,
-			StringValue: fmt.Sprintf("%f", variable.NumberValue),
+			StringValue: strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", variable.NumberValue), "0"), "."),
 		}, nil
 	}
 
