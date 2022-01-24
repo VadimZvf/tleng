@@ -271,6 +271,20 @@ func IsNextExpressionToken(stream ITokenStream) bool {
 	return false
 }
 
+// ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+// ┃         Utilities          ┃
+// ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+func AppendNodes(node *ASTNode, children []*ASTNode) {
+	for _, child := range children {
+		node.Body = append(node.Body, child)
+	}
+}
+
+func AppendNode(node *ASTNode, child *ASTNode) {
+	node.Body = append(node.Body, child)
+}
+
 func contains(all []string, target string) bool {
 	for _, item := range all {
 		if item == target {

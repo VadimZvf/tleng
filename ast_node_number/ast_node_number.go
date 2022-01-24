@@ -1,18 +1,18 @@
-package ast_node_string
+package ast_node_number
 
 import (
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/parser_error"
 )
 
-var StringProcessor ast_node.ASTNodeProcessor = process
+var NumberProcessor ast_node.ASTNodeProcessor = process
 
 func process(stream ast_node.ITokenStream, context ast_node.IASTNodeProcessingContext, leftNode *ast_node.ASTNode) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if leftNode != nil {
 		return []*ast_node.ASTNode{}, parser_error.ParserError{
-			Message:       "Left node not supported for string node",
+			Message:       "Left node not supported for number node",
 			StartPosition: currentToken.StartPosition,
 			EndPosition:   currentToken.EndPosition,
 		}
@@ -26,13 +26,13 @@ func process(stream ast_node.ITokenStream, context ast_node.IASTNodeProcessingCo
 		}
 	}
 
-	var stringNode = ast_node.CreateNode(currentToken)
+	var numberNode = ast_node.CreateNode(currentToken)
 
 	if !ast_node.IsNextArithmeticToken(stream) {
-		return []*ast_node.ASTNode{&stringNode}, nil
+		return []*ast_node.ASTNode{&numberNode}, nil
 	}
 
 	stream.MoveNext()
 
-	return context.Process(stream, context, &stringNode)
+	return context.Process(stream, context, &numberNode)
 }

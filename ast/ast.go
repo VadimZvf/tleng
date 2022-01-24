@@ -4,6 +4,9 @@ import (
 	"fmt"
 
 	"github.com/VadimZvf/golang/ast_node"
+	"github.com/VadimZvf/golang/ast_node_binary_expression"
+	"github.com/VadimZvf/golang/ast_node_number"
+	"github.com/VadimZvf/golang/ast_node_return"
 	"github.com/VadimZvf/golang/ast_node_string"
 	"github.com/VadimZvf/golang/ast_token_stream"
 	"github.com/VadimZvf/golang/parser_error"
@@ -44,7 +47,7 @@ func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 		var nodes, err = getNodes(&tokenStream, nil)
 
 		for _, node := range nodes {
-			appendNode(&ast, node)
+			ast_node.AppendNode(&ast, node)
 		}
 
 		if err != nil {
@@ -68,16 +71,16 @@ func getNodes(stream ast_node.ITokenStream, leftNode *ast_node.ASTNode) ([]*ast_
 			EndPosition:   currentToken.EndPosition,
 		}
 	}
+	var ctx = createContext(getNodes)
 
 	switch currentToken.Code {
 	case token_variable_declaration.VARIABLE_DECLARAION:
 		return processVariableDeclaration(stream)
 
 	case token_number.NUMBER:
-		return processNumber(stream)
+		return ast_node_number.NumberProcessor(stream, ctx, nil)
 
 	case token_string.STRING:
-		var ctx = createContext(getNodes)
 		return ast_node_string.StringProcessor(stream, ctx, nil)
 
 	case token_keyword.KEY_WORD:
@@ -87,13 +90,13 @@ func getNodes(stream ast_node.ITokenStream, leftNode *ast_node.ASTNode) ([]*ast_
 		return processFunction(stream)
 
 	case token_return.RETURN_DECLARATION:
-		return processReturn(stream)
+		return ast_node_return.ReturnProcessor(stream, ctx, nil)
 
 	case token.OPEN_EXPRESSION:
 		return processParenthesizedExpression(stream)
 
 	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
-		return processBinaryExpression(leftNode, stream)
+		return ast_node_binary_expression.BinaryExpressionProcessor(stream, ctx, leftNode)
 
 	case token.END_LINE:
 		return []*ast_node.ASTNode{}, nil
@@ -145,7 +148,7 @@ func processVariableDeclaration(stream ast_node.ITokenStream) ([]*ast_node.ASTNo
 		var assignmentNodes, assignmentNodeParsingError = processAssignment(&referenceNode, stream)
 
 		if assignmentNodeParsingError != nil {
-			return []*ast_node.ASTNode{&variableDeclarationNode}, mergeParserErrors(parser_error.ParserError{
+			return []*ast_node.ASTNode{&variableDeclarationNode}, parser_error.MergeParserErrors(parser_error.ParserError{
 				Message: "Parsing error. At assignment with variable declaration",
 			}, assignmentNodeParsingError)
 		}
@@ -204,34 +207,6 @@ func processKeyWord(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	return []*ast_node.ASTNode{&referenceNode}, nil
 }
 
-func processNumber(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
-	var currentToken, isEnd = stream.Look()
-
-	if isEnd {
-		return []*ast_node.ASTNode{}, parser_error.ParserError{
-			Message:       "Unexpected file end. Something wrong internal at number processing",
-			StartPosition: currentToken.StartPosition,
-			EndPosition:   currentToken.EndPosition,
-		}
-	}
-
-	var numberNode = ast_node.CreateNode(currentToken)
-
-	var nextToken, isEndNext = stream.LookNext()
-
-	if isEndNext {
-		return []*ast_node.ASTNode{&numberNode}, nil
-	}
-
-	switch nextToken.Code {
-	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
-		stream.MoveNext()
-		return processBinaryExpression(&numberNode, stream)
-	}
-
-	return []*ast_node.ASTNode{&numberNode}, nil
-}
-
 func processAssignment(leftNode *ast_node.ASTNode, stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
@@ -250,7 +225,7 @@ func processAssignment(leftNode *ast_node.ASTNode, stream ast_node.ITokenStream)
 	var rightNodes, rightNodesParsingError = getNodes(stream, nil)
 
 	if rightNodesParsingError != nil {
-		return []*ast_node.ASTNode{leftNode}, mergeParserErrors(parser_error.ParserError{
+		return []*ast_node.ASTNode{leftNode}, parser_error.MergeParserErrors(parser_error.ParserError{
 			Message: "Failed parse right node of assignment expression",
 		}, rightNodesParsingError)
 	}
@@ -263,8 +238,8 @@ func processAssignment(leftNode *ast_node.ASTNode, stream ast_node.ITokenStream)
 		}
 	}
 
-	appendNode(&assignmentNode, leftNode)
-	appendNodes(&assignmentNode, rightNodes)
+	ast_node.AppendNode(&assignmentNode, leftNode)
+	ast_node.AppendNodes(&assignmentNode, rightNodes)
 
 	return []*ast_node.ASTNode{&assignmentNode}, nil
 }
@@ -285,7 +260,7 @@ func processBinaryExpression(leftNode *ast_node.ASTNode, stream ast_node.ITokenS
 	var rightNodes, rightNodeError = getNodes(stream, nil)
 
 	if rightNodeError != nil {
-		return []*ast_node.ASTNode{leftNode}, mergeParserErrors(parser_error.ParserError{
+		return []*ast_node.ASTNode{leftNode}, parser_error.MergeParserErrors(parser_error.ParserError{
 			Message: "Failed parse right node of binary expression",
 		}, rightNodeError)
 	}
@@ -298,7 +273,7 @@ func processBinaryExpression(leftNode *ast_node.ASTNode, stream ast_node.ITokenS
 		}
 	}
 
-	appendNodes(&binaryNode, []*ast_node.ASTNode{
+	ast_node.AppendNodes(&binaryNode, []*ast_node.ASTNode{
 		leftNode,
 		rightNodes[0],
 	})
@@ -322,7 +297,7 @@ func processParenthesizedExpression(stream ast_node.ITokenStream) ([]*ast_node.A
 	var valueNodes, valueNodeError = getNodes(stream, nil)
 
 	if valueNodeError != nil {
-		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, mergeParserErrors(parser_error.ParserError{
+		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, parser_error.MergeParserErrors(parser_error.ParserError{
 			Message: "Failed parse value node of parenthesized expression",
 		}, valueNodeError)
 	}
@@ -338,7 +313,7 @@ func processParenthesizedExpression(stream ast_node.ITokenStream) ([]*ast_node.A
 	var nextToken, isEndNext = stream.LookNext()
 
 	if isEndNext {
-		appendNodes(&parenthesizedExpressionNode, valueNodes)
+		ast_node.AppendNodes(&parenthesizedExpressionNode, valueNodes)
 
 		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, nil
 	}
@@ -353,7 +328,7 @@ func processParenthesizedExpression(stream ast_node.ITokenStream) ([]*ast_node.A
 	parenthesizedExpressionNode.EndPosition = nextToken.EndPosition
 
 	stream.MoveNext()
-	appendNodes(&parenthesizedExpressionNode, valueNodes)
+	ast_node.AppendNodes(&parenthesizedExpressionNode, valueNodes)
 
 	nextToken, isEndNext = stream.LookNext()
 
@@ -367,7 +342,7 @@ func processParenthesizedExpression(stream ast_node.ITokenStream) ([]*ast_node.A
 		var binaryExpressionNodes, binaryExpressionNodeError = processBinaryExpression(&parenthesizedExpressionNode, stream)
 
 		if binaryExpressionNodeError != nil {
-			return []*ast_node.ASTNode{&parenthesizedExpressionNode}, mergeParserErrors(parser_error.ParserError{
+			return []*ast_node.ASTNode{&parenthesizedExpressionNode}, parser_error.MergeParserErrors(parser_error.ParserError{
 				Message: "Failed parse binary expression node in parenthesized expression",
 			}, binaryExpressionNodeError)
 		}
@@ -429,12 +404,12 @@ func processFunction(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) 
 		var bodyNodes, bodyNodeParsingError = getNodes(stream, nil)
 
 		if bodyNodeParsingError != nil {
-			return []*ast_node.ASTNode{&functionNode}, mergeParserErrors(parser_error.ParserError{
+			return []*ast_node.ASTNode{&functionNode}, parser_error.MergeParserErrors(parser_error.ParserError{
 				Message: "Failed parsing in function body",
 			}, bodyNodeParsingError)
 		}
 
-		appendNodes(&functionNode, bodyNodes)
+		ast_node.AppendNodes(&functionNode, bodyNodes)
 		stream.MoveNext()
 		nextToken, isEndNext = stream.Look()
 	}
@@ -461,7 +436,7 @@ func processReturn(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var valueNodes, valueNodeError = getNodes(stream, nil)
 
 	if valueNodeError != nil {
-		return []*ast_node.ASTNode{&returnNode}, mergeParserErrors(parser_error.ParserError{
+		return []*ast_node.ASTNode{&returnNode}, parser_error.MergeParserErrors(parser_error.ParserError{
 			Message: "Failed parse value node of return declaration",
 		}, valueNodeError)
 	}
@@ -474,7 +449,7 @@ func processReturn(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 		}
 	}
 
-	appendNodes(&returnNode, valueNodes)
+	ast_node.AppendNodes(&returnNode, valueNodes)
 
 	return []*ast_node.ASTNode{&returnNode}, nil
 }
@@ -491,7 +466,7 @@ func processReadProperty(leftNode *ast_node.ASTNode, stream ast_node.ITokenStrea
 	}
 
 	var nextReadPropetryNode = ast_node.CreateNode(currentToken)
-	appendNode(&nextReadPropetryNode, leftNode)
+	ast_node.AppendNode(&nextReadPropetryNode, leftNode)
 
 	stream.MoveNext()
 	var propertyToken, isEndAtProperty = stream.Look()
@@ -565,7 +540,7 @@ func processCallExpression(leftNode *ast_node.ASTNode, stream ast_node.ITokenStr
 	callNode.Arguments = arguments
 
 	if argumentsParsingError != nil {
-		return []*ast_node.ASTNode{&callNode}, mergeParserErrors(parser_error.ParserError{
+		return []*ast_node.ASTNode{&callNode}, parser_error.MergeParserErrors(parser_error.ParserError{
 			Message: "Something wrong at arguments call expression processing",
 		}, argumentsParsingError)
 	}
@@ -616,7 +591,7 @@ func processCallExpressionArguments(stream ast_node.ITokenStream) ([]*ast_node.A
 		var argument, argumentParsingError = getNodes(stream, nil)
 
 		if argumentParsingError != nil {
-			return arguments, mergeParserErrors(parser_error.ParserError{
+			return arguments, parser_error.MergeParserErrors(parser_error.ParserError{
 				Message: "Something wrong at call argument processing",
 			}, argumentParsingError)
 		}
@@ -649,38 +624,4 @@ func processCallExpressionArguments(stream ast_node.ITokenStream) ([]*ast_node.A
 	}
 
 	return arguments, nil
-}
-
-// ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-// ┃         Utilities          ┃
-// ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-
-func appendNodes(node *ast_node.ASTNode, children []*ast_node.ASTNode) {
-	for _, child := range children {
-		node.Body = append(node.Body, child)
-	}
-}
-
-func appendNode(node *ast_node.ASTNode, child *ast_node.ASTNode) {
-	node.Body = append(node.Body, child)
-}
-
-func mergeParserErrors(first error, second error) error {
-	firstParserError, firstCastOk := first.(parser_error.ParserError)
-
-	if !firstCastOk {
-		return firstParserError
-	}
-
-	secondParserError, secondCastOk := second.(parser_error.ParserError)
-
-	if !secondCastOk {
-		return firstParserError
-	}
-
-	firstParserError.Message = secondParserError.Message + "\n  " + firstParserError.Message
-	firstParserError.StartPosition = secondParserError.StartPosition
-	firstParserError.EndPosition = secondParserError.EndPosition
-
-	return firstParserError
 }

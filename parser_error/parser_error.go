@@ -17,3 +17,23 @@ func CreateError(message string, start int, end int) ParserError {
 		EndPosition:   end,
 	}
 }
+
+func MergeParserErrors(first error, second error) error {
+	firstParserError, firstCastOk := first.(ParserError)
+
+	if !firstCastOk {
+		return firstParserError
+	}
+
+	secondParserError, secondCastOk := second.(ParserError)
+
+	if !secondCastOk {
+		return firstParserError
+	}
+
+	firstParserError.Message = secondParserError.Message + "\n  " + firstParserError.Message
+	firstParserError.StartPosition = secondParserError.StartPosition
+	firstParserError.EndPosition = secondParserError.EndPosition
+
+	return firstParserError
+}
