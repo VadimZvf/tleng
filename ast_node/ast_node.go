@@ -218,3 +218,64 @@ func CreateNode(currentToken token.Token) ASTNode {
 		return ASTNode{}
 	}
 }
+
+type ITokenStream interface {
+	MoveNext()
+	Look() (token.Token, bool)
+	LookNext() (token.Token, bool)
+}
+
+type IASTNodeProcessingContext interface {
+	Process(stream ITokenStream, context IASTNodeProcessingContext, leftNode *ASTNode) (resultNodes []*ASTNode, err error)
+}
+
+type ASTNodeProcessor = func(stream ITokenStream, context IASTNodeProcessingContext, leftNode *ASTNode) (resultNodes []*ASTNode, err error)
+
+var arithmeticTokens = []string{
+	token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK,
+}
+
+func IsNextArithmeticToken(stream ITokenStream) bool {
+	var nextToken, isEnd = stream.LookNext()
+
+	if isEnd {
+		return false
+	}
+
+	if contains(arithmeticTokens, nextToken.Code) {
+		return true
+	}
+
+	return false
+}
+
+func IsNextExpressionToken(stream ITokenStream) bool {
+	var nextToken, isEnd = stream.LookNext()
+
+	if isEnd {
+		return false
+	}
+
+	if contains(arithmeticTokens, nextToken.Code) {
+		return true
+	}
+
+	if nextToken.Code == token_read_property.READ_PROPERTY {
+		return true
+	}
+
+	if nextToken.Code == token.OPEN_EXPRESSION {
+		return true
+	}
+
+	return false
+}
+
+func contains(all []string, target string) bool {
+	for _, item := range all {
+		if item == target {
+			return true
+		}
+	}
+	return false
+}

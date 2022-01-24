@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/VadimZvf/golang/ast_node"
+	"github.com/VadimZvf/golang/ast_node_string"
 	"github.com/VadimZvf/golang/ast_token_stream"
 	"github.com/VadimZvf/golang/parser_error"
 	"github.com/VadimZvf/golang/token"
@@ -16,6 +17,22 @@ import (
 	"github.com/VadimZvf/golang/token_variable_declaration"
 )
 
+type baseProcess = func(stream ast_node.ITokenStream, leftNode *ast_node.ASTNode) (resultNodes []*ast_node.ASTNode, err error)
+
+type context struct {
+	baseProcess baseProcess
+}
+
+func (ctx context) Process(stream ast_node.ITokenStream, currentCtx ast_node.IASTNodeProcessingContext, leftNode *ast_node.ASTNode) (resultNodes []*ast_node.ASTNode, err error) {
+	return ctx.baseProcess(stream, leftNode)
+}
+
+func createContext(baseProcess baseProcess) ast_node.IASTNodeProcessingContext {
+	return context{
+		baseProcess,
+	}
+}
+
 func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	var tokenStream = ast_token_stream.CreateTokenStream(tokens)
 	var _, isEnd = tokenStream.Look()
@@ -24,7 +41,7 @@ func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	}
 
 	for !isEnd {
-		var nodes, err = getNodes(&tokenStream)
+		var nodes, err = getNodes(&tokenStream, nil)
 
 		for _, node := range nodes {
 			appendNode(&ast, node)
@@ -41,7 +58,7 @@ func CreateAST(tokens []token.Token) (*ast_node.ASTNode, error) {
 	return &ast, nil
 }
 
-func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func getNodes(stream ast_node.ITokenStream, leftNode *ast_node.ASTNode) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -60,7 +77,8 @@ func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error)
 		return processNumber(stream)
 
 	case token_string.STRING:
-		return processString(stream)
+		var ctx = createContext(getNodes)
+		return ast_node_string.StringProcessor(stream, ctx, nil)
 
 	case token_keyword.KEY_WORD:
 		return processKeyWord(stream)
@@ -74,6 +92,9 @@ func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error)
 	case token.OPEN_EXPRESSION:
 		return processParenthesizedExpression(stream)
 
+	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
+		return processBinaryExpression(leftNode, stream)
+
 	case token.END_LINE:
 		return []*ast_node.ASTNode{}, nil
 	}
@@ -85,7 +106,7 @@ func getNodes(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error)
 	}
 }
 
-func processVariableDeclaration(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processVariableDeclaration(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -143,7 +164,7 @@ func processVariableDeclaration(stream *ast_token_stream.TokenStream) ([]*ast_no
 	return []*ast_node.ASTNode{&variableDeclarationNode}, nil
 }
 
-func processKeyWord(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processKeyWord(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -183,7 +204,7 @@ func processKeyWord(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, 
 	return []*ast_node.ASTNode{&referenceNode}, nil
 }
 
-func processNumber(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processNumber(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -211,35 +232,7 @@ func processNumber(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, e
 	return []*ast_node.ASTNode{&numberNode}, nil
 }
 
-func processString(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
-	var currentToken, isEnd = stream.Look()
-
-	if isEnd {
-		return []*ast_node.ASTNode{}, parser_error.ParserError{
-			Message:       "Unexpected file end. Something wrong internal at number processing",
-			StartPosition: currentToken.StartPosition,
-			EndPosition:   currentToken.EndPosition,
-		}
-	}
-
-	var stringNode = ast_node.CreateNode(currentToken)
-
-	var nextToken, isEndNext = stream.LookNext()
-
-	if isEndNext {
-		return []*ast_node.ASTNode{&stringNode}, nil
-	}
-
-	switch nextToken.Code {
-	case token.ADD, token.SUBTRACT, token.SLASH, token.ASTERISK:
-		stream.MoveNext()
-		return processBinaryExpression(&stringNode, stream)
-	}
-
-	return []*ast_node.ASTNode{&stringNode}, nil
-}
-
-func processAssignment(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processAssignment(leftNode *ast_node.ASTNode, stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -254,7 +247,7 @@ func processAssignment(leftNode *ast_node.ASTNode, stream *ast_token_stream.Toke
 
 	stream.MoveNext()
 
-	var rightNodes, rightNodesParsingError = getNodes(stream)
+	var rightNodes, rightNodesParsingError = getNodes(stream, nil)
 
 	if rightNodesParsingError != nil {
 		return []*ast_node.ASTNode{leftNode}, mergeParserErrors(parser_error.ParserError{
@@ -276,7 +269,7 @@ func processAssignment(leftNode *ast_node.ASTNode, stream *ast_token_stream.Toke
 	return []*ast_node.ASTNode{&assignmentNode}, nil
 }
 
-func processBinaryExpression(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processBinaryExpression(leftNode *ast_node.ASTNode, stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -289,7 +282,7 @@ func processBinaryExpression(leftNode *ast_node.ASTNode, stream *ast_token_strea
 
 	var binaryNode = ast_node.CreateNode(currentToken)
 	stream.MoveNext()
-	var rightNodes, rightNodeError = getNodes(stream)
+	var rightNodes, rightNodeError = getNodes(stream, nil)
 
 	if rightNodeError != nil {
 		return []*ast_node.ASTNode{leftNode}, mergeParserErrors(parser_error.ParserError{
@@ -313,7 +306,7 @@ func processBinaryExpression(leftNode *ast_node.ASTNode, stream *ast_token_strea
 	return []*ast_node.ASTNode{&binaryNode}, nil
 }
 
-func processParenthesizedExpression(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processParenthesizedExpression(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -326,7 +319,7 @@ func processParenthesizedExpression(stream *ast_token_stream.TokenStream) ([]*as
 
 	var parenthesizedExpressionNode = ast_node.CreateNode(currentToken)
 	stream.MoveNext()
-	var valueNodes, valueNodeError = getNodes(stream)
+	var valueNodes, valueNodeError = getNodes(stream, nil)
 
 	if valueNodeError != nil {
 		return []*ast_node.ASTNode{&parenthesizedExpressionNode}, mergeParserErrors(parser_error.ParserError{
@@ -397,7 +390,7 @@ func processParenthesizedExpression(stream *ast_token_stream.TokenStream) ([]*as
 	return []*ast_node.ASTNode{&parenthesizedExpressionNode}, nil
 }
 
-func processFunction(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processFunction(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -433,7 +426,7 @@ func processFunction(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode,
 	nextToken, isEndNext = stream.Look()
 
 	for !isEndNext && nextToken.Code != token.CLOSE_BLOCK {
-		var bodyNodes, bodyNodeParsingError = getNodes(stream)
+		var bodyNodes, bodyNodeParsingError = getNodes(stream, nil)
 
 		if bodyNodeParsingError != nil {
 			return []*ast_node.ASTNode{&functionNode}, mergeParserErrors(parser_error.ParserError{
@@ -451,7 +444,7 @@ func processFunction(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode,
 	return []*ast_node.ASTNode{&functionNode}, nil
 }
 
-func processReturn(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processReturn(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -465,7 +458,7 @@ func processReturn(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, e
 	var returnNode = ast_node.CreateNode(currentToken)
 	stream.MoveNext()
 
-	var valueNodes, valueNodeError = getNodes(stream)
+	var valueNodes, valueNodeError = getNodes(stream, nil)
 
 	if valueNodeError != nil {
 		return []*ast_node.ASTNode{&returnNode}, mergeParserErrors(parser_error.ParserError{
@@ -486,7 +479,7 @@ func processReturn(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, e
 	return []*ast_node.ASTNode{&returnNode}, nil
 }
 
-func processReadProperty(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processReadProperty(leftNode *ast_node.ASTNode, stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -547,7 +540,7 @@ func processReadProperty(leftNode *ast_node.ASTNode, stream *ast_token_stream.To
 	return []*ast_node.ASTNode{&nextReadPropetryNode}, nil
 }
 
-func processCallExpression(leftNode *ast_node.ASTNode, stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processCallExpression(leftNode *ast_node.ASTNode, stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 
 	if isEnd {
@@ -615,12 +608,12 @@ func processCallExpression(leftNode *ast_node.ASTNode, stream *ast_token_stream.
 	return []*ast_node.ASTNode{&callNode}, nil
 }
 
-func processCallExpressionArguments(stream *ast_token_stream.TokenStream) ([]*ast_node.ASTNode, error) {
+func processCallExpressionArguments(stream ast_node.ITokenStream) ([]*ast_node.ASTNode, error) {
 	var currentToken, isEnd = stream.Look()
 	var arguments = []*ast_node.ASTNode{}
 
 	for !isEnd && currentToken.Code != token.CLOSE_EXPRESSION {
-		var argument, argumentParsingError = getNodes(stream)
+		var argument, argumentParsingError = getNodes(stream, nil)
 
 		if argumentParsingError != nil {
 			return arguments, mergeParserErrors(parser_error.ParserError{
