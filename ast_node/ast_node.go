@@ -268,6 +268,10 @@ func IsNextExpressionToken(stream ITokenStream) bool {
 		return true
 	}
 
+	if nextToken.Code == token.ASSIGNMENT {
+		return true
+	}
+
 	return false
 }
 
