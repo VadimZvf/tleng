@@ -6,3 +6,5 @@ function welcomeFabric(welcomePrefix) {
 
 welcomeFabric("Hello")("World")
 welcomeFabric("Hi")("Tleng")
+
+var wow = false

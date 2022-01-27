@@ -7,6 +7,7 @@ import (
 	"github.com/VadimZvf/golang/parser_error"
 	"github.com/VadimZvf/golang/source_mock"
 	"github.com/VadimZvf/golang/token"
+	"github.com/VadimZvf/golang/token_boolean"
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_return"
 	"github.com/VadimZvf/golang/token_string"
@@ -69,6 +70,38 @@ func TestKeywordLikeVariableDecloration(t *testing.T) {
 		Value:         "constA",
 		StartPosition: 0,
 		EndPosition:   5,
+	}) {
+		t.Errorf("Wrong token")
+	}
+}
+
+func TestBooleanTrueValue(t *testing.T) {
+	var src = source_mock.GetSourceMock(`true`)
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var tokenizer = GetTokenizer(&buffer)
+	var tokens, _ = tokenizer.GetTokens()
+
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token_boolean.BOOLEAN,
+		Value:         "true",
+		StartPosition: 0,
+		EndPosition:   3,
+	}) {
+		t.Errorf("Wrong token")
+	}
+}
+
+func TestBooleanFalseValue(t *testing.T) {
+	var src = source_mock.GetSourceMock(`false`)
+	var buffer = tokenizer_buffer.CreateBuffer(src)
+	var tokenizer = GetTokenizer(&buffer)
+	var tokens, _ = tokenizer.GetTokens()
+
+	if !isSameToken(tokens[0], token.Token{
+		Code:          token_boolean.BOOLEAN,
+		Value:         "false",
+		StartPosition: 0,
+		EndPosition:   4,
 	}) {
 		t.Errorf("Wrong token")
 	}

@@ -3,6 +3,7 @@ package tokenizer
 import (
 	"github.com/VadimZvf/golang/parser_error"
 	"github.com/VadimZvf/golang/token"
+	"github.com/VadimZvf/golang/token_boolean"
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_keyword"
 	"github.com/VadimZvf/golang/token_number"
@@ -77,6 +78,7 @@ func getToken(buffer iBuffer) (token.Token, bool, error) {
 		token_read_property.ReadPropertyProcessor,
 		token_number.NumberProcessor,
 		token_return.ReturnProcessor,
+		token_boolean.BooleanProcessor,
 		token_variable_declaration.VariableDeclarationProcessor,
 		token_function_declaration.FunctionDeclorationProcessor,
 		token_keyword.KeyWordProcessor,
