@@ -40,6 +40,10 @@ func printArg(variable *runtime_heap.VariableValue, bridge *Bridge) {
 		bridge.JSPrint(strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", variable.NumberValue), "0"), "."))
 	}
 
+	if variable.ValueType == runtime_heap.TYPE_BOOLEAN {
+		bridge.JSPrint(variable.BooleanValue)
+	}
+
 	if variable.ValueType == runtime_heap.TYPE_FUNCTION {
 		var functionName = ast_node.GetFunctionNameParam(variable.FunctionValue)
 		bridge.JSPrint("function " + functionName.Value)

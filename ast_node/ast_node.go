@@ -2,6 +2,7 @@ package ast_node
 
 import (
 	"github.com/VadimZvf/golang/token"
+	"github.com/VadimZvf/golang/token_boolean"
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_keyword"
 	"github.com/VadimZvf/golang/token_number"
@@ -39,6 +40,7 @@ const AST_NODE_CODE_CALL_EXPRESSION = "CALL_EXPRESSION"
 const AST_NODE_CODE_READ_PROP = "READ_PROP"
 const AST_NODE_CODE_NUMBER = "NUMBER"
 const AST_NODE_CODE_STRING = "STRING"
+const AST_NODE_CODE_BOOLEAN = "BOOLEAN"
 const AST_NODE_CODE_REFERENCE = "REFERENCE"
 const AST_NODE_CODE_FUNCTION = "FUNCTION"
 const AST_NODE_CODE_RETURN = "RETURN"
@@ -48,6 +50,7 @@ const AST_PARAM_FUNCTION_NAME = "FUNCTION_NAME"
 const AST_PARAM_FUNCTION_ARGUMENT_NAME = "FUNCTION_ARGUMENT_NAME"
 const AST_PARAM_NUMBER_VALUE = "NUMBER_VALUE"
 const AST_PARAM_STRING_VALUE = "STRING_VALUE"
+const AST_PARAM_BOOLEAN_VALUE = "BOOLEAN_VALUE"
 const AST_PARAM_BINARY_EXPRESSION_TYPE = "BINARY_EXPRESSION_TYPE"
 const AST_PARAM_PROPERTY_NAME = "PROPERTY_NAME"
 
@@ -59,12 +62,16 @@ func GetNumberValueParam(node *ASTNode) *ASTNodeParam {
 	return GetParam(node, AST_PARAM_NUMBER_VALUE)
 }
 
-func GetFunctionNameParam(node *ASTNode) *ASTNodeParam {
-	return GetParam(node, AST_PARAM_FUNCTION_NAME)
-}
-
 func GetStringValueParam(node *ASTNode) *ASTNodeParam {
 	return GetParam(node, AST_PARAM_STRING_VALUE)
+}
+
+func GetBooleanValueParam(node *ASTNode) *ASTNodeParam {
+	return GetParam(node, AST_PARAM_BOOLEAN_VALUE)
+}
+
+func GetFunctionNameParam(node *ASTNode) *ASTNodeParam {
+	return GetParam(node, AST_PARAM_FUNCTION_NAME)
 }
 
 func GetBinaryExpressionTypeParam(node *ASTNode) *ASTNodeParam {
@@ -147,6 +154,20 @@ func CreateNode(currentToken token.Token) ASTNode {
 			Code: AST_NODE_CODE_STRING,
 			Params: []ASTNodeParam{{
 				Name:          AST_PARAM_STRING_VALUE,
+				Value:         currentToken.Value,
+				StartPosition: currentToken.StartPosition,
+				EndPosition:   currentToken.EndPosition,
+			}},
+			// Debug data
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+
+	case token_boolean.BOOLEAN:
+		return ASTNode{
+			Code: AST_NODE_CODE_BOOLEAN,
+			Params: []ASTNodeParam{{
+				Name:          AST_PARAM_BOOLEAN_VALUE,
 				Value:         currentToken.Value,
 				StartPosition: currentToken.StartPosition,
 				EndPosition:   currentToken.EndPosition,

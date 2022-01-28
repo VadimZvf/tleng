@@ -11,6 +11,7 @@ import (
 
 var TYPE_STRING = "STRING"
 var TYPE_NUMBER = "NUMBER"
+var TYPE_BOOLEAN = "BOOLEAN"
 var TYPE_FUNCTION = "FUNCTION"
 var TYPE_NATIVE_FUNCTION = "NATIVE_FUNCTION"
 var TYPE_UNKNOWN = "UNKNOWN"
@@ -19,6 +20,7 @@ type VariableValue struct {
 	ValueType           string
 	StringValue         string
 	NumberValue         float64
+	BooleanValue        string
 	FunctionValue       *ast_node.ASTNode
 	FunctionClosureHeap *Heap
 	NativeFunctionName  string
@@ -66,6 +68,7 @@ func (heap *Heap) SetVariable(name string, variable *VariableValue) error {
 	prevVariable.ValueType = variable.ValueType
 	prevVariable.NumberValue = variable.NumberValue
 	prevVariable.StringValue = variable.StringValue
+	prevVariable.BooleanValue = variable.BooleanValue
 	prevVariable.FunctionValue = variable.FunctionValue
 	prevVariable.NativeFunctionName = variable.NativeFunctionName
 	prevVariable.FunctionClosureHeap = variable.FunctionClosureHeap
@@ -105,6 +108,20 @@ func CastToNumber(variable *VariableValue) (*VariableValue, error) {
 		}, nil
 	}
 
+	if variable.ValueType == TYPE_BOOLEAN {
+		if variable.BooleanValue == "true" {
+			return &VariableValue{
+				ValueType:   TYPE_NUMBER,
+				NumberValue: 1,
+			}, nil
+		}
+
+		return &VariableValue{
+			ValueType:   TYPE_NUMBER,
+			NumberValue: 0,
+		}, nil
+	}
+
 	if variable.ValueType == TYPE_UNKNOWN {
 		return &VariableValue{
 			ValueType:   TYPE_NUMBER,
@@ -126,6 +143,13 @@ func CastToString(variable *VariableValue) (*VariableValue, error) {
 		return &VariableValue{
 			ValueType:   TYPE_STRING,
 			StringValue: strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", variable.NumberValue), "0"), "."),
+		}, nil
+	}
+
+	if variable.ValueType == TYPE_BOOLEAN {
+		return &VariableValue{
+			ValueType:   TYPE_STRING,
+			StringValue: variable.BooleanValue,
 		}, nil
 	}
 

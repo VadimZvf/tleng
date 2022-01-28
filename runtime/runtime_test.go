@@ -21,6 +21,41 @@ func TestPrintText(t *testing.T) {
 	}
 }
 
+func TestPrintBooleanValue(t *testing.T) {
+	var bridge, err = runCode(`
+		var variable = true
+
+		print(variable)
+	`)
+
+	if err != nil {
+		t.Errorf("Code failed with error: \"%s\"", err.Error())
+	}
+
+	if bridge.GetLastPring() != "true" {
+		t.Errorf("Code should print message \"true\", but received: \"%s\"", bridge.GetLastPring())
+	}
+}
+
+func TestTypeCastingToString(t *testing.T) {
+	var bridge, err = runCode(`
+		var boolean = true
+		var string = "3"
+		var number = 5
+		var result = boolean + string + number
+
+		print(result)
+	`)
+
+	if err != nil {
+		t.Errorf("Code failed with error: \"%s\"", err.Error())
+	}
+
+	if bridge.GetLastPring() != "true35" {
+		t.Errorf("Code should print message \"true35\", but received: \"%s\"", bridge.GetLastPring())
+	}
+}
+
 func TestCallFunction(t *testing.T) {
 	var bridge, err = runCode(`
 	function foo() {

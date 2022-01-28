@@ -29,6 +29,10 @@ func printArg(variable *runtime_heap.VariableValue) {
 		fmt.Println(variable.NumberValue)
 	}
 
+	if variable.ValueType == runtime_heap.TYPE_BOOLEAN {
+		fmt.Println(variable.BooleanValue)
+	}
+
 	if variable.ValueType == runtime_heap.TYPE_FUNCTION {
 		var functionName = ast_node.GetFunctionNameParam(variable.FunctionValue)
 		fmt.Println("function " + functionName.Value)

@@ -39,6 +39,10 @@ func (bridge *Bridge) saveLogArg(variable *runtime_heap.VariableValue) {
 		bridge.log = append(bridge.log, strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", variable.NumberValue), "0"), "."))
 	}
 
+	if variable.ValueType == runtime_heap.TYPE_BOOLEAN {
+		bridge.log = append(bridge.log, variable.BooleanValue)
+	}
+
 	if variable.ValueType == runtime_heap.TYPE_FUNCTION {
 		var functionName = ast_node.GetFunctionNameParam(variable.FunctionValue)
 		bridge.log = append(bridge.log, "function "+functionName.Value)

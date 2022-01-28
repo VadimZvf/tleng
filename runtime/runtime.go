@@ -52,6 +52,7 @@ func (runtime *Runtime) visitNode(node *ast_node.ASTNode) (*runtime_heap.Variabl
 		ast_node.AST_NODE_CODE_REFERENCE:                runtime.visitReferenceNode,
 		ast_node.AST_NODE_CODE_NUMBER:                   runtime.visitNumberNode,
 		ast_node.AST_NODE_CODE_STRING:                   runtime.visitStringNode,
+		ast_node.AST_NODE_CODE_BOOLEAN:                  runtime.visitBooleanNode,
 		ast_node.AST_NODE_CODE_FUNCTION:                 runtime.visitFunctionNode,
 		ast_node.AST_NODE_CODE_BINARY_EXPRESSION:        runtime.visitBinaryExpressionNode,
 		ast_node.AST_NODE_CODE_PARENTHESIZED_EXPRESSION: runtime.visitParenthesizedExpressionNode,
@@ -195,6 +196,19 @@ func (runtime *Runtime) visitNumberNode(node *ast_node.ASTNode) (*runtime_heap.V
 	}
 
 	return &runtime_heap.VariableValue{NumberValue: number, ValueType: runtime_heap.TYPE_NUMBER}, nil
+}
+
+func (runtime *Runtime) visitBooleanNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
+	var booleanValue = ast_node.GetBooleanValueParam(node)
+
+	if booleanValue == nil {
+		return nil, runtime_error.CreateError(
+			"Cannot get boolean value",
+			node,
+		)
+	}
+
+	return &runtime_heap.VariableValue{BooleanValue: booleanValue.Value, ValueType: runtime_heap.TYPE_BOOLEAN}, nil
 }
 
 func (runtime *Runtime) visitReturnNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {

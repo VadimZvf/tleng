@@ -8,3 +8,5 @@ welcomeFabric("Hello")("World")
 welcomeFabric("Hi")("Tleng")
 
 var wow = false
+
+welcomeFabric("Hi")(wow)

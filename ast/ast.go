@@ -4,6 +4,7 @@ import (
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/ast_node_assignment"
 	"github.com/VadimZvf/golang/ast_node_binary_expression"
+	"github.com/VadimZvf/golang/ast_node_boolean"
 	"github.com/VadimZvf/golang/ast_node_call_expression"
 	"github.com/VadimZvf/golang/ast_node_function"
 	"github.com/VadimZvf/golang/ast_node_number"
@@ -16,6 +17,7 @@ import (
 	"github.com/VadimZvf/golang/ast_token_stream"
 	"github.com/VadimZvf/golang/parser_error"
 	"github.com/VadimZvf/golang/token"
+	"github.com/VadimZvf/golang/token_boolean"
 	"github.com/VadimZvf/golang/token_function_declaration"
 	"github.com/VadimZvf/golang/token_keyword"
 	"github.com/VadimZvf/golang/token_number"
@@ -73,6 +75,9 @@ func (ctx context) Process(stream ast_node.ITokenStream, currentCtx ast_node.IAS
 
 	case token_string.STRING:
 		return ast_node_string.StringProcessor(stream, ctx, leftNode)
+
+	case token_boolean.BOOLEAN:
+		return ast_node_boolean.BooleanProcessor(stream, ctx, leftNode)
 
 	case token_keyword.KEY_WORD:
 		return ast_node_reference.ReferenceProcessor(stream, ctx, leftNode)
