@@ -31,7 +31,7 @@ func readWordsWithSeporator(buffer token.IBuffer, seporator rune) []token.TokenP
 const functionDeclorationName = "function"
 
 func proccess(buffer token.IBuffer) (token.Token, bool, error) {
-	if !buffer.IsStartsWith(functionDeclorationName + " ") {
+	if !buffer.IsStartsWithWord(functionDeclorationName) {
 		return token.Token{}, false, nil
 	}
 

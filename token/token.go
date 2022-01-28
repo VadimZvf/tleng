@@ -25,7 +25,7 @@ type IBuffer interface {
 	Next()
 	TrimNext()
 	AddSymbol()
-	IsStartsWith(value string) bool
+	IsStartsWithWord(value string) bool
 	Eat(length int)
 	Clear()
 }

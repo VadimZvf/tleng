@@ -12,7 +12,7 @@ var VARIABLE_NAME_PARAM = "NAME"
 var variableDeclorationName = "var"
 
 func proccess(buffer token.IBuffer) (token.Token, bool, error) {
-	if !buffer.IsStartsWith(variableDeclorationName + " ") {
+	if !buffer.IsStartsWithWord(variableDeclorationName) {
 		return token.Token{}, false, nil
 	}
 

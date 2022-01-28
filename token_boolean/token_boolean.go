@@ -11,11 +11,11 @@ var booleanTrueValue = "true"
 var booleanFalseValue = "false"
 
 func proccess(buffer token.IBuffer) (token.Token, bool, error) {
-	if buffer.IsStartsWith(booleanTrueValue) {
+	if buffer.IsStartsWithWord(booleanTrueValue) {
 		return proccessTrue(buffer)
 	}
 
-	if buffer.IsStartsWith(booleanFalseValue) {
+	if buffer.IsStartsWithWord(booleanFalseValue) {
 		return proccessFalse(buffer)
 	}
 

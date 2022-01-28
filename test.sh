@@ -14,6 +14,13 @@ go test
 cd ..
 echo ""
 
+echo "Boolean token"
+echo "======================"
+cd token_boolean
+go test
+cd ..
+echo ""
+
 echo "Function declaration token"
 echo "======================"
 cd token_function_declaration

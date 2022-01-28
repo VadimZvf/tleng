@@ -2,6 +2,8 @@ package tokenizer_buffer
 
 import (
 	"strings"
+
+	"github.com/VadimZvf/golang/token"
 )
 
 type iSource interface {
@@ -15,7 +17,7 @@ type Buffer struct {
 	positionInBuffer int    // Index position in loaded value
 	code             string // Full text of code
 	position         int    // Current index position in code
-	isEnd            bool
+	isSourceEnd      bool
 
 	// Inner props
 	source iSource
@@ -38,7 +40,7 @@ func (buffer *Buffer) GetPosition() int {
 }
 
 func (buffer *Buffer) GetIsEnd() bool {
-	return buffer.positionInBuffer == len(buffer.loadedValue) && buffer.isEnd
+	return buffer.positionInBuffer == len(buffer.loadedValue) && buffer.isSourceEnd
 }
 
 func (buffer *Buffer) GetReadedCode() string {
@@ -73,12 +75,30 @@ func (buffer *Buffer) AddSymbol() {
 	buffer.value = buffer.value + string(buffer.GetSymbol())
 }
 
-func (buffer *Buffer) IsStartsWith(tokenValue string) bool {
-	for len(buffer.loadedValue) < len(tokenValue) && !buffer.isEnd {
+func (buffer *Buffer) IsStartsWithWord(word string) bool {
+	for len(buffer.loadedValue) < len(word) && !buffer.isSourceEnd {
 		buffer.loadSymbol()
 	}
 
-	return strings.HasPrefix(buffer.loadedValue, tokenValue)
+	var isStartsWithWord = strings.HasPrefix(buffer.loadedValue, word)
+
+	if !isStartsWithWord {
+		return false
+	}
+
+	if buffer.isSourceEnd {
+		return true
+	}
+
+	buffer.loadSymbol()
+
+	if buffer.isSourceEnd {
+		return true
+	}
+
+	var symbolAfterWord = buffer.loadedValue[len(word)]
+
+	return !token.IsKeyWordSymbol(rune(symbolAfterWord))
 }
 
 func (buffer *Buffer) Eat(length int) {
@@ -101,7 +121,7 @@ func (buffer *Buffer) Clear() {
 func (buffer *Buffer) loadSymbol() {
 	symbol, isEnd := buffer.source.NextSymbol()
 
-	buffer.isEnd = isEnd
+	buffer.isSourceEnd = isEnd
 
 	if isEnd {
 		return
@@ -112,7 +132,7 @@ func (buffer *Buffer) loadSymbol() {
 }
 
 func CreateBuffer(source iSource) Buffer {
-	symbol, isEnd := source.NextSymbol()
+	symbol, isSourceEnd := source.NextSymbol()
 
 	return Buffer{
 		value: "",
@@ -121,7 +141,7 @@ func CreateBuffer(source iSource) Buffer {
 		positionInBuffer: 0,
 		code:             string(symbol),
 		position:         0,
-		isEnd:            isEnd,
+		isSourceEnd:      isSourceEnd,
 
 		// Inner props
 		source: source,

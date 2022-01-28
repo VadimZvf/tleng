@@ -10,7 +10,7 @@ import (
 func TestCreateBuffer(t *testing.T) {
 	var source = source_mock.GetSimpleSource()
 	buffer := CreateBuffer(source)
-	if buffer.isEnd != false {
+	if buffer.isSourceEnd != false {
 		t.Errorf("Buffer interface should contain isEnd flag")
 	}
 
