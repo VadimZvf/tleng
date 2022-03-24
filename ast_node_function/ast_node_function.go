@@ -48,22 +48,16 @@ func process(stream ast_node.ITokenStream, context ast_node.IASTNodeProcessingCo
 		}
 	}
 
-	stream.MoveNext()
-	nextToken, isEndNext = stream.Look()
+	var bodyNodes, bodyNodeParsingError = context.Process(stream, context, nil)
 
-	for !isEndNext && nextToken.Code != token.CLOSE_BLOCK {
-		var bodyNodes, bodyNodeParsingError = context.Process(stream, context, nil)
-
-		if bodyNodeParsingError != nil {
-			return []*ast_node.ASTNode{&functionNode}, parser_error.MergeParserErrors(parser_error.ParserError{
-				Message: "Failed parsing in function body",
-			}, bodyNodeParsingError)
-		}
-
-		ast_node.AppendNodes(&functionNode, bodyNodes)
-		stream.MoveNext()
-		nextToken, isEndNext = stream.Look()
+	if bodyNodeParsingError != nil {
+		return []*ast_node.ASTNode{&functionNode}, parser_error.MergeParserErrors(parser_error.ParserError{
+			Message: "Failed parsing in function body",
+		}, bodyNodeParsingError)
 	}
+
+	ast_node.AppendNodes(&functionNode, bodyNodes)
+	nextToken, _ = stream.Look()
 
 	functionNode.EndPosition = nextToken.EndPosition
 

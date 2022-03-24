@@ -787,23 +787,10 @@ func TestFunctionDeclaration(t *testing.T) {
 				},
 				Body: []*ast_node.ASTNode{
 					{
-						Code: ast_node.AST_NODE_CODE_VARIABLE_DECLARATION,
-						Params: []ast_node.ASTNodeParam{
-							{
-								Name:          ast_node.AST_PARAM_VARIABLE_NAME,
-								Value:         "a",
-								StartPosition: 25,
-								EndPosition:   25,
-							},
-						},
-						StartPosition: 21,
-						EndPosition:   25,
-					},
-					{
-						Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
+						Code: ast_node.AST_NODE_CODE_BLOCK,
 						Body: []*ast_node.ASTNode{
 							{
-								Code: ast_node.AST_NODE_CODE_REFERENCE,
+								Code: ast_node.AST_NODE_CODE_VARIABLE_DECLARATION,
 								Params: []ast_node.ASTNodeParam{
 									{
 										Name:          ast_node.AST_PARAM_VARIABLE_NAME,
@@ -812,58 +799,78 @@ func TestFunctionDeclaration(t *testing.T) {
 										EndPosition:   25,
 									},
 								},
-								StartPosition: 25,
+								StartPosition: 21,
 								EndPosition:   25,
 							},
 							{
-								Code: ast_node.AST_NODE_CODE_NUMBER,
-								Params: []ast_node.ASTNodeParam{
+								Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
+								Body: []*ast_node.ASTNode{
 									{
-										Name:          ast_node.AST_PARAM_NUMBER_VALUE,
-										Value:         "1",
+										Code: ast_node.AST_NODE_CODE_REFERENCE,
+										Params: []ast_node.ASTNodeParam{
+											{
+												Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+												Value:         "a",
+												StartPosition: 25,
+												EndPosition:   25,
+											},
+										},
+										StartPosition: 25,
+										EndPosition:   25,
+									},
+									{
+										Code: ast_node.AST_NODE_CODE_NUMBER,
+										Params: []ast_node.ASTNodeParam{
+											{
+												Name:          ast_node.AST_PARAM_NUMBER_VALUE,
+												Value:         "1",
+												StartPosition: 29,
+												EndPosition:   29,
+											},
+										},
 										StartPosition: 29,
 										EndPosition:   29,
 									},
 								},
-								StartPosition: 29,
-								EndPosition:   29,
+								StartPosition: 27,
+								EndPosition:   27,
 							},
-						},
-						StartPosition: 27,
-						EndPosition:   27,
-					},
-					{
-						Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
-						Body: []*ast_node.ASTNode{
 							{
-								Code: ast_node.AST_NODE_CODE_REFERENCE,
-								Params: []ast_node.ASTNodeParam{
+								Code: ast_node.AST_NODE_CODE_ASSIGNMENT,
+								Body: []*ast_node.ASTNode{
 									{
-										Name:          ast_node.AST_PARAM_VARIABLE_NAME,
-										Value:         "b",
+										Code: ast_node.AST_NODE_CODE_REFERENCE,
+										Params: []ast_node.ASTNodeParam{
+											{
+												Name:          ast_node.AST_PARAM_VARIABLE_NAME,
+												Value:         "b",
+												StartPosition: 34,
+												EndPosition:   34,
+											},
+										},
 										StartPosition: 34,
 										EndPosition:   34,
 									},
-								},
-								StartPosition: 34,
-								EndPosition:   34,
-							},
-							{
-								Code: ast_node.AST_NODE_CODE_NUMBER,
-								Params: []ast_node.ASTNodeParam{
 									{
-										Name:          ast_node.AST_PARAM_NUMBER_VALUE,
-										Value:         "2",
+										Code: ast_node.AST_NODE_CODE_NUMBER,
+										Params: []ast_node.ASTNodeParam{
+											{
+												Name:          ast_node.AST_PARAM_NUMBER_VALUE,
+												Value:         "2",
+												StartPosition: 38,
+												EndPosition:   38,
+											},
+										},
 										StartPosition: 38,
 										EndPosition:   38,
 									},
 								},
-								StartPosition: 38,
-								EndPosition:   38,
+								StartPosition: 36,
+								EndPosition:   36,
 							},
 						},
-						StartPosition: 36,
-						EndPosition:   36,
+						StartPosition: 17,
+						EndPosition:   42,
 					},
 				},
 				StartPosition: 2,
@@ -909,52 +916,59 @@ func TestFunctionDeclarationWithReturn(t *testing.T) {
 				},
 				Body: []*ast_node.ASTNode{
 					{
-						Code: ast_node.AST_NODE_CODE_RETURN,
+						Code: ast_node.AST_NODE_CODE_BLOCK,
 						Body: []*ast_node.ASTNode{
 							{
-								Code: ast_node.AST_NODE_CODE_BINARY_EXPRESSION,
-								Params: []ast_node.ASTNodeParam{
-									{
-										Name:          ast_node.AST_PARAM_BINARY_EXPRESSION_TYPE,
-										Value:         "+",
-										StartPosition: 36,
-										EndPosition:   36,
-									},
-								},
+								Code: ast_node.AST_NODE_CODE_RETURN,
 								Body: []*ast_node.ASTNode{
 									{
-										Code: ast_node.AST_NODE_CODE_STRING,
+										Code: ast_node.AST_NODE_CODE_BINARY_EXPRESSION,
 										Params: []ast_node.ASTNodeParam{
 											{
-												Name:          ast_node.AST_PARAM_STRING_VALUE,
-												Value:         "Hello",
+												Name:          ast_node.AST_PARAM_BINARY_EXPRESSION_TYPE,
+												Value:         "+",
+												StartPosition: 36,
+												EndPosition:   36,
+											},
+										},
+										Body: []*ast_node.ASTNode{
+											{
+												Code: ast_node.AST_NODE_CODE_STRING,
+												Params: []ast_node.ASTNodeParam{
+													{
+														Name:          ast_node.AST_PARAM_STRING_VALUE,
+														Value:         "Hello",
+														StartPosition: 28,
+														EndPosition:   34,
+													},
+												},
 												StartPosition: 28,
 												EndPosition:   34,
 											},
-										},
-										StartPosition: 28,
-										EndPosition:   34,
-									},
-									{
-										Code: ast_node.AST_NODE_CODE_STRING,
-										Params: []ast_node.ASTNodeParam{
 											{
-												Name:          ast_node.AST_PARAM_STRING_VALUE,
-												Value:         "World",
+												Code: ast_node.AST_NODE_CODE_STRING,
+												Params: []ast_node.ASTNodeParam{
+													{
+														Name:          ast_node.AST_PARAM_STRING_VALUE,
+														Value:         "World",
+														StartPosition: 38,
+														EndPosition:   44,
+													},
+												},
 												StartPosition: 38,
 												EndPosition:   44,
 											},
 										},
-										StartPosition: 38,
-										EndPosition:   44,
+										StartPosition: 36,
+										EndPosition:   36,
 									},
 								},
-								StartPosition: 36,
-								EndPosition:   36,
+								StartPosition: 21,
+								EndPosition:   26,
 							},
 						},
-						StartPosition: 21,
-						EndPosition:   26,
+						StartPosition: 17,
+						EndPosition:   47,
 					},
 				},
 				StartPosition: 2,

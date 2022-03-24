@@ -4,6 +4,7 @@ import (
 	"github.com/VadimZvf/golang/ast_node"
 	"github.com/VadimZvf/golang/ast_node_assignment"
 	"github.com/VadimZvf/golang/ast_node_binary_expression"
+	"github.com/VadimZvf/golang/ast_node_block"
 	"github.com/VadimZvf/golang/ast_node_boolean"
 	"github.com/VadimZvf/golang/ast_node_call_expression"
 	"github.com/VadimZvf/golang/ast_node_function"
@@ -87,6 +88,9 @@ func (ctx context) Process(stream ast_node.ITokenStream, currentCtx ast_node.IAS
 
 	case token_return.RETURN_DECLARATION:
 		return ast_node_return.ReturnProcessor(stream, ctx, leftNode)
+
+	case token.OPEN_BLOCK:
+		return ast_node_block.BlockProcessor(stream, ctx, leftNode)
 
 	case token.OPEN_EXPRESSION:
 		if leftNode == nil {

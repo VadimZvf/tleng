@@ -36,6 +36,7 @@ const AST_NODE_CODE_VARIABLE_DECLARATION = "VARIABLE_DECLARATION"
 const AST_NODE_CODE_ASSIGNMENT = "ASSIGNMENT"
 const AST_NODE_CODE_BINARY_EXPRESSION = "BINARY_EXPRESSION"
 const AST_NODE_CODE_PARENTHESIZED_EXPRESSION = "PARENTHESIZED_EXPRESSION"
+const AST_NODE_CODE_BLOCK = "BLOCK"
 const AST_NODE_CODE_CALL_EXPRESSION = "CALL_EXPRESSION"
 const AST_NODE_CODE_READ_PROP = "READ_PROP"
 const AST_NODE_CODE_NUMBER = "NUMBER"
@@ -235,6 +236,15 @@ func CreateNode(currentToken token.Token) ASTNode {
 			StartPosition: currentToken.StartPosition,
 			EndPosition:   currentToken.EndPosition,
 		}
+
+	case token.OPEN_BLOCK:
+		return ASTNode{
+			Code: AST_NODE_CODE_BLOCK,
+			// Debug data
+			StartPosition: currentToken.StartPosition,
+			EndPosition:   currentToken.EndPosition,
+		}
+
 	default:
 		return ASTNode{}
 	}

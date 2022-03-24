@@ -57,6 +57,7 @@ func (runtime *Runtime) visitNode(node *ast_node.ASTNode) (*runtime_heap.Variabl
 		ast_node.AST_NODE_CODE_BINARY_EXPRESSION:        runtime.visitBinaryExpressionNode,
 		ast_node.AST_NODE_CODE_PARENTHESIZED_EXPRESSION: runtime.visitParenthesizedExpressionNode,
 		ast_node.AST_NODE_CODE_CALL_EXPRESSION:          runtime.visitCallExpressionNode,
+		ast_node.AST_NODE_CODE_BLOCK:                    runtime.visitBlockNode,
 		ast_node.AST_NODE_CODE_RETURN:                   runtime.visitReturnNode,
 	}
 
@@ -493,14 +494,31 @@ func (runtime *Runtime) visitCallExpressionNode(node *ast_node.ASTNode) (*runtim
 
 	innerRuntime.heap.SetParentHeap(functionVariable.FunctionClosureHeap)
 
-	for _, functionBodyNode := range functionVariable.FunctionValue.Body {
-		var bodyNodeValue, bodyNodeErr = innerRuntime.visitNode(functionBodyNode)
+	if len(functionVariable.FunctionValue.Body) != 1 {
+		return nil, runtime_error.CreateError(
+			"Function can has only one body node",
+			node,
+		)
+	}
+
+	var bodyNodeValue, bodyNodeErr = innerRuntime.visitNode(functionVariable.FunctionValue.Body[0])
+
+	if bodyNodeErr != nil {
+		return bodyNodeValue, bodyNodeErr
+	}
+
+	return bodyNodeValue, nil
+}
+
+func (runtime *Runtime) visitBlockNode(node *ast_node.ASTNode) (*runtime_heap.VariableValue, error) {
+	for _, blockBodyNode := range node.Body {
+		var bodyNodeValue, bodyNodeErr = runtime.visitNode(blockBodyNode)
 
 		if bodyNodeErr != nil {
 			return nil, bodyNodeErr
 		}
 
-		if functionBodyNode.Code == ast_node.AST_NODE_CODE_RETURN {
+		if blockBodyNode.Code == ast_node.AST_NODE_CODE_RETURN {
 			return bodyNodeValue, nil
 		}
 	}
